@@ -2,9 +2,9 @@
   <div v-if="isOpen" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h2>{{ isEditing ? 'View & Edit Meal' : 'New Meal' }}</h2>
+        <h2>{{ modalTitle }}</h2>
         <div class="modal-actions">
-          <button v-if="isEditing" class="delete-button" @click="handleDelete">
+          <button v-if="task" class="delete-button" @click="handleDelete">
             <i class="fas fa-trash"></i>
           </button>
           <button class="close-button" @click="closeModal">
@@ -28,7 +28,7 @@
               <input
                 type="number"
                 id="calories"
-                v-model="form.calories"
+                v-model="caloriesValue"
                 class="form-control"
                 placeholder="Calories"
                 min="0"
@@ -249,6 +249,10 @@ const props = defineProps({
   activeView: {
     type: String,
     default: 'daddy'
+  },
+  modalTitle: {
+    type: String,
+    required: true
   }
 })
 
@@ -263,7 +267,7 @@ const defaultFormState = {
   status: 'monday',
   comments: [],
   images: [],
-  calories: '',
+  calories: null,
   viewType: 'daddy'
 }
 
@@ -272,13 +276,31 @@ const form = ref({ ...defaultFormState })
 const newComment = ref('')
 const newCommentAuthor = ref('')
 
-const isEditing = computed(() => !!props.task)
+const isEditing = computed(() => {
+  console.log('Computing isEditing, task prop:', props.task)
+  const result = !!props.task
+  console.log('isEditing result:', result)
+  return result
+})
 
 const showImageModal = ref(false)
 const selectedImage = ref(null)
 
 const editingCommentIndex = ref(-1)
 const editingCommentText = ref('')
+
+const caloriesValue = computed({
+  get: () => form.value.calories,
+  set: (value) => {
+    // If the value is empty, set to null
+    if (value === '') {
+      form.value.calories = null
+    } else {
+      // Convert to number and store
+      form.value.calories = Number(value)
+    }
+  }
+})
 
 const resetForm = () => {
   form.value = {
@@ -310,18 +332,35 @@ const updateDayFromDate = () => {
 
 // Watch for changes in the task prop
 watch(() => props.task, (newTask) => {
+  console.log('Task prop changed:', newTask)
   if (newTask) {
+    console.log('Setting form with task data')
+    console.log('Task mealDate:', newTask.mealDate)
+    console.log('Task data:', JSON.stringify(newTask, null, 2))
+    
+    // Format mealDate for the date input if it exists
+    let formattedMealDate = ''
+    if (newTask.mealDate) {
+      const date = new Date(newTask.mealDate)
+      formattedMealDate = date.toISOString().split('T')[0]
+    }
+    
     form.value = {
       ...defaultFormState,
       ...newTask,
       viewType: newTask.viewType || props.activeView,
-      mealDate: newTask.mealDate || ''
+      mealDate: formattedMealDate,
+      calories: newTask.calories || null,
+      comments: newTask.comments || [],
+      images: newTask.images || []
     }
+    console.log('Form data after setting:', JSON.stringify(form.value, null, 2))
     // Update day based on meal date when task is loaded
     if (newTask.mealDate) {
       updateDayFromDate()
     }
   } else {
+    console.log('Resetting form')
     resetForm()
   }
 }, { immediate: true })
@@ -331,6 +370,11 @@ watch(() => props.activeView, (newView) => {
   if (!props.task) {
     form.value.viewType = newView
   }
+}, { immediate: true })
+
+// Add a watch for modalTitle
+watch(() => props.modalTitle, (newTitle) => {
+  console.log('Modal title changed:', newTitle)
 }, { immediate: true })
 
 const closeModal = () => {
@@ -343,10 +387,27 @@ const handleSubmit = async () => {
     // Create a copy of the form data
     const taskData = { ...form.value }
     
+    console.log('Original form data:', form.value)
+    console.log('Calories before conversion:', taskData.calories)
+    
+    // Convert calories to number if it exists and has a value
+    if (taskData.calories !== null && taskData.calories !== '') {
+      taskData.calories = parseInt(taskData.calories)
+    } else {
+      delete taskData.calories
+    }
+    
+    // Handle mealDate field - only delete if it's empty string
+    if (taskData.mealDate === '') {
+      delete taskData.mealDate
+    }
+    
     // If it's a new task, we don't need to include the id
     if (!isEditing.value) {
       delete taskData.id
     }
+    
+    console.log('Final task data being saved:', taskData)
     
     // Emit the save event with the task data
     await emit('save', taskData)

@@ -4,6 +4,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import viteCompression from 'vite-plugin-compression2'
 import { imagetools } from 'vite-imagetools'
 import { fileURLToPath, URL } from 'node:url'
+import process from 'node:process'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {

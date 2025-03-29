@@ -2,7 +2,7 @@
   <div class="task-card" :class="{ 'non-today': !isToday, 'behind-today': isBehindToday }" @click.stop="openTask">
     <template v-if="isToday">
       <div class="task-header">
-        <h3 class="task-title">{{ task.title }}</h3>
+        <h3 class="task-title">{{ formatTitle(task.title) }}</h3>
       </div>
        
       <div class="task-content">
@@ -24,7 +24,7 @@
           <img v-if="task.images && task.images.length > 0" :src="task.images[0].url" :alt="task.title" class="task-image" />
         </div>
         <div class="task-header">
-          <h3 class="task-title">{{ task.title }}</h3>
+          <h3 class="task-title">{{ formatTitle(task.title) }}</h3>
         </div>
         <div class="task-badges">
           <span class="meal-type-badge">{{ formatMealType(task.mealType) }}</span>
@@ -36,11 +36,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, defineAsyncComponent } from 'vue'
-
-const OptimizedImage = defineAsyncComponent(() => 
-  import('./OptimizedImage.vue')
-)
+import { defineProps, defineEmits, computed } from 'vue'
 
 const props = defineProps({
   task: {
@@ -63,10 +59,6 @@ const props = defineProps({
 
 const emit = defineEmits(['open-task'])
 
-const displayedImages = computed(() => {
-  return props.task.images?.slice(0, 3) || []
-})
-
 const truncatedDescription = computed(() => {
   if (!props.task.description) return ''
   if (props.task.description.length <= 125) return props.task.description
@@ -75,6 +67,25 @@ const truncatedDescription = computed(() => {
 
 const openTask = () => {
   emit('open-task', props.task)
+}
+
+const formatMealType = (type) => {
+  if (!type) return ''
+  return type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+}
+
+const formatTitle = (title) => {
+  if (!title) return ''
+  return title.split('-').map(word => {
+    // Special case for DLC
+    if (word.toLowerCase() === 'dlc') {
+      return 'DLC'
+    }
+    if (word.toLowerCase() === 'vb') {
+      return 'VB'
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1)
+  }).join(' ')
 }
 
 const formatDate = (date) => {
@@ -102,11 +113,6 @@ const formatStatus = (status) => {
     }
     return word.charAt(0).toUpperCase() + word.slice(1)
   }).join(' ')
-}
-
-const formatMealType = (type) => {
-  if (!type) return 'Breakfast'
-  return type.charAt(0).toUpperCase() + type.slice(1)
 }
 </script>
 

@@ -11,15 +11,6 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-}
-
 // Tasks Collection
 const TASKS_COLLECTION = 'tasks'
 
@@ -49,14 +40,22 @@ export const subscribeToTasks = (callback) => {
 // Add a new task
 export const addTask = async (task) => {
   try {
-    console.log('Adding new task to Firestore:', task)
+    console.log('Adding new task to Firestore - Raw task:', task)
+    console.log('Calories value:', task.calories)
+    console.log('Calories type:', typeof task.calories)
+    
     if (!db) {
       throw new Error('Firestore is not initialized')
     }
-    const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
+    
+    const taskData = {
       ...task,
       createdAt: new Date().toISOString()
-    })
+    }
+    
+    console.log('Final task data being saved to Firestore:', taskData)
+    
+    const docRef = await addDoc(collection(db, TASKS_COLLECTION), taskData)
     console.log('Task added successfully with ID:', docRef.id)
     return docRef.id
   } catch (error) {

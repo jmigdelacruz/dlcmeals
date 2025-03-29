@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch, nextTick } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import draggable from 'vuedraggable/src/vuedraggable'
 
 // Lazy load both TaskCard and draggable
@@ -104,167 +104,92 @@ const columnWidth = computed(() => {
   return 0.6
 })
 
-const currentTime = computed(() => {
-  return new Date().toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: true 
-  })
-})
-
-const currentDate = computed(() => {
-  return new Date().toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+const formattedTitle = computed(() => {
+  return props.title.slice(0, 3).toUpperCase()
 })
 
 const totalCalories = computed(() => {
-  return props.tasks.reduce((sum, task) => {
-    const calories = parseInt(task.calories) || 0
-    return sum + calories
-  }, 0)
-})
-
-const formattedTitle = computed(() => {
-  return props.title.slice(0, 3).toUpperCase()
+  return props.tasks.reduce((sum, task) => sum + (task.calories || 0), 0)
 })
 
 const isBehindToday = computed(() => {
   const today = new Date().getDay()
   const currentDay = dayMap[props.title.toLowerCase()]
+  const distance = currentDay - today
   
-  // Adjust for week starting on Monday (0) and ending on Sunday (6)
-  const adjustedToday = today === 0 ? 6 : today - 1  // Convert Sunday (0) to 6
-  const adjustedCurrentDay = currentDay === 0 ? 6 : currentDay - 1  // Convert Sunday (0) to 6
+  // If it's the next day (including Sunday when today is Saturday), it's not behind today
+  if (distance === 1 || distance === -6) return false
   
-  return adjustedCurrentDay < adjustedToday
+  // For all other days, check if they're before today
+  return currentDay < today
 })
 
 const formatDayDate = (day) => {
   const today = new Date()
-  const currentDay = dayMap[day.toLowerCase()]
-  const daysUntilTarget = currentDay - today.getDay()
+  const dayIndex = dayMap[day.toLowerCase()]
   const targetDate = new Date(today)
-  targetDate.setDate(today.getDate() + daysUntilTarget)
-  
-  return targetDate.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit'
-  })
+  targetDate.setDate(today.getDate() + (dayIndex - today.getDay()))
+  return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 const getColumnDate = (day) => {
   const today = new Date()
-  const currentDay = dayMap[day.toLowerCase()]
-  const daysUntilTarget = currentDay - today.getDay()
+  const dayIndex = dayMap[day.toLowerCase()]
   const targetDate = new Date(today)
-  targetDate.setDate(today.getDate() + daysUntilTarget)
-  return targetDate.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+  targetDate.setDate(today.getDate() + (dayIndex - today.getDay()))
+  return targetDate.toISOString().split('T')[0]
 }
 
-const checkMobile = () => {
-  // Check if the device is mobile using multiple methods
-  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                        window.innerWidth <= 768 ||
-                        window.matchMedia('(max-width: 768px)').matches;
-  
-  isMobile.value = isMobileDevice;
-  if (isMobileDevice) {
-    // Add a small delay to ensure the DOM is ready
-    setTimeout(() => {
-      checkScrollButtons();
-    }, 100);
+const handleDragChange = (evt) => {
+  if (evt.added) {
+    emit('task-moved', {
+      taskId: evt.added.element.id,
+      fromDate: evt.added.from.getAttribute('data-date'),
+      toDate: evt.added.to.getAttribute('data-date')
+    })
   }
 }
 
 const checkScrollButtons = () => {
-  const container = draggableRef.value?.$el
-  if (!container) return
+  if (!draggableRef.value) return
   
-  // Add a small delay to ensure the scroll position is updated
-  setTimeout(() => {
-    canScrollLeft.value = container.scrollLeft > 0
-    canScrollRight.value = container.scrollLeft < (container.scrollWidth - container.clientWidth - 1) // Add small buffer
-  }, 50)
+  const container = draggableRef.value.$el
+  canScrollLeft.value = container.scrollLeft > 0
+  canScrollRight.value = container.scrollLeft < (container.scrollWidth - container.clientWidth)
 }
 
 const scrollLeft = () => {
-  const container = draggableRef.value?.$el
-  if (!container) return
-  
-  container.scrollBy({
-    left: -300,
-    behavior: 'smooth'
-  })
-  
-  // Check scroll buttons after scrolling
-  setTimeout(checkScrollButtons, 300)
+  if (!draggableRef.value) return
+  draggableRef.value.$el.scrollBy({ left: -200, behavior: 'smooth' })
 }
 
 const scrollRight = () => {
-  const container = draggableRef.value?.$el
-  if (!container) return
-  
-  container.scrollBy({
-    left: 300,
-    behavior: 'smooth'
-  })
-  
-  // Check scroll buttons after scrolling
-  setTimeout(checkScrollButtons, 300)
+  if (!draggableRef.value) return
+  draggableRef.value.$el.scrollBy({ left: 200, behavior: 'smooth' })
 }
 
 onMounted(() => {
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
+  isMobile.value = window.innerWidth < 768
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
   
-  // Add media query listener
-  const mediaQuery = window.matchMedia('(max-width: 768px)');
-  mediaQuery.addEventListener('change', checkMobile);
-  
-  const container = draggableRef.value?.$el;
-  if (container) {
-    container.addEventListener('scroll', checkScrollButtons);
-    // Initial check after a short delay to ensure DOM is ready
-    setTimeout(checkScrollButtons, 100);
+  if (isMobile.value) {
+    const container = draggableRef.value.$el
+    container.addEventListener('scroll', checkScrollButtons)
+    checkScrollButtons()
   }
-  
-  // Clean up media query listener on unmount
-  onUnmounted(() => {
-    mediaQuery.removeEventListener('change', checkMobile);
-  });
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile);
-  const container = draggableRef.value?.$el;
-  if (container) {
-    container.removeEventListener('scroll', checkScrollButtons);
+  window.removeEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+  
+  if (isMobile.value && draggableRef.value) {
+    draggableRef.value.$el.removeEventListener('scroll', checkScrollButtons)
   }
-});
-
-const handleDragChange = (evt) => {
-  if (evt.added) {
-    const { element } = evt.added
-    // Convert title to status format without replacing spaces with hyphens
-    const newStatus = props.title.toLowerCase().split(' ').join('-')
-    console.log('Task dragged to:', newStatus, 'Task:', element)
-    
-    // Get the task ID directly from the element
-    const taskId = element.id
-    console.log('Using task ID:', taskId)
-    
-    if (!taskId) {
-      console.error('Could not find task ID in element:', element)
-      return
-    }
-    
-    // Emit the task-moved event for Firestore update
-    emit('task-moved', taskId, newStatus)
-  }
-}
+})
 </script>
 
 <style scoped>

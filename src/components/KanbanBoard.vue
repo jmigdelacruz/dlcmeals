@@ -77,6 +77,7 @@
       :is-open="showModal"
       :task="selectedTask"
       :active-view="activeView"
+      :modal-title="selectedTask ? 'View & Edit Meal' : 'New Meal'"
       @close="closeModal"
       @save="handleTaskSave"
       @delete="handleTaskDelete"
@@ -276,12 +277,14 @@ const handleTaskSave = async (taskData) => {
         images: taskData.images || [],
         comments: taskData.comments || [],
         mealType: taskData.mealType || 'breakfast',
+        calories: taskData.calories || null,
+        mealDate: taskData.mealDate || null,
         view: activeView.value,
         createdAt: new Date().toISOString()
       }
       console.log('Clean task data:', cleanTaskData)
-      const taskId = await addTask(cleanTaskData)
-      console.log('New task created with ID:', taskId)
+      await addTask(cleanTaskData)
+      console.log('New task created successfully')
     }
     showModal.value = false
     selectedTask.value = null
@@ -292,13 +295,32 @@ const handleTaskSave = async (taskData) => {
 }
 
 const openModal = (task = null) => {
-  selectedTask.value = task
+  console.log('Opening modal with task:', task)
+  // If task is a PointerEvent (click event), set it to null
+  selectedTask.value = task instanceof PointerEvent ? null : task
+  console.log('selectedTask after setting:', selectedTask.value)
+  console.log('Modal title will be:', selectedTask.value ? 'View & Edit Meal' : 'New Meal')
   showModal.value = true
 }
 
+// Add a watch for selectedTask
+watch(selectedTask, (newValue) => {
+  console.log('selectedTask changed:', newValue)
+  console.log('Modal title will be:', newValue ? 'View & Edit Meal' : 'New Meal')
+})
+
+// Add a watch for showModal
+watch(showModal, (newValue) => {
+  console.log('showModal changed:', newValue)
+  console.log('Current selectedTask:', selectedTask.value)
+  console.log('Modal title will be:', selectedTask.value ? 'View & Edit Meal' : 'New Meal')
+})
+
 const closeModal = () => {
+  console.log('Closing modal, current selectedTask:', selectedTask.value)
   showModal.value = false
   selectedTask.value = null
+  console.log('After closing modal, selectedTask:', selectedTask.value)
 }
 
 const formatStatus = (status) => {
@@ -326,8 +348,6 @@ const getTasksByStatus = (status) => {
       const taskView = task.view || 'daddy'
       if (taskView === activeView.value) {
         const taskStatus = task.status.toLowerCase()
-        if (formattedStatus === 'new' && taskStatus === 'todo') return true
-        if (formattedStatus === 'todo' && taskStatus === 'new') return true
         
         // Check if task is within selected week
         let taskDate
@@ -346,17 +366,29 @@ const getTasksByStatus = (status) => {
         }
         
         const isInWeek = taskDate >= monday && taskDate <= sunday
+        
+        // For tasks with dates behind today, show them in the appropriate day column
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const isBehindToday = taskDate < today
+        
+        // If task is behind today, show it in the day column that matches its mealDate
+        if (isBehindToday) {
+          const taskDay = taskDate.getDay()
+          const dayMap = {
+            0: 'sunday',
+            1: 'monday',
+            2: 'tuesday',
+            3: 'wednesday',
+            4: 'thursday',
+            5: 'friday',
+            6: 'saturday'
+          }
+          return dayMap[taskDay] === formattedStatus
+        }
+        
+        // For current and future tasks, show them based on their status
         const matchesStatus = taskStatus === formattedStatus
-        
-        console.log('Task matches criteria:', {
-          title: task.title,
-          isInWeek,
-          matchesStatus,
-          taskDate: taskDate.toISOString(),
-          weekStart: monday.toISOString(),
-          weekEnd: sunday.toISOString()
-        })
-        
         return matchesStatus && isInWeek
       }
       return false
