@@ -15,7 +15,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        return Promise.allSettled(
+          urlsToCache.map(url => cache.add(url))
+        ).then(results => {
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              console.warn(`Failed to cache ${urlsToCache[index]}:`, result.reason);
+            }
+          });
+        });
       })
   );
   // Force activate immediately

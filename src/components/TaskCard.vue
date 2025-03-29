@@ -127,10 +127,6 @@ const formatMealType = (type) => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.task-card:active {
-  cursor: grabbing;
-}
-
 .task-header {
   display: flex;
   flex-direction: column;

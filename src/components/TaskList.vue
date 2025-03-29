@@ -19,6 +19,7 @@
       <draggable
         ref="draggableRef"
         :list="tasks"
+        @update:list="$emit('update:tasks', $event)"
         group="tasks"
         item-key="id"
         class="task-list-content"
@@ -51,7 +52,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch, nextTick } from 'vue'
-import { VueDraggableNext as draggable } from 'vue-draggable-next'
+import draggable from 'vuedraggable/src/vuedraggable'
 
 // Lazy load both TaskCard and draggable
 const TaskCard = defineAsyncComponent(() => 
@@ -413,9 +414,48 @@ const handleDragChange = (evt) => {
   overflow: hidden;
 }
 
+/* Simple ghost card style */
 .ghost-card {
+  background: #2D303E;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ghost-card * {
+  display: none !important;
+}
+
+.dragging-card {
   opacity: 0.5;
   background: #c8ebfb;
+  pointer-events: none;
+  cursor: grabbing;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ghost-card .task-image-container {
+  display: none;
+}
+
+.ghost-card .task-content {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0;
+}
+
+.ghost-card .task-header,
+.ghost-card .task-badges {
+  opacity: 0.7;
+}
+
+.ghost-card .description {
+  display: none;
 }
 
 @media (max-width: 768px) {
