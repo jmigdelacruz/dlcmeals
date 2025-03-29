@@ -46,13 +46,19 @@
       </button>
       <div class="columns-container">
         <TaskList
-          v-for="status in statuses"
+          v-for="(status, index) in statuses"
           :key="status"
           :title="formatStatus(status)"
           :tasks="getTasksByStatus(status)"
+          :class="{ 
+            'wave-animation': isAnimating && activeColumnIndex >= index,
+            'wave-left': waveDirection === 'left',
+            'wave-right': waveDirection === 'right'
+          }"
           @task-moved="handleTaskMoved"
           @update:tasks="(updatedTasks) => handleTasksUpdate(updatedTasks, status)"
           @open-task="openModal"
+          @animationend="activeColumnIndex = index + 1"
         />
       </div>
       <button class="nav-arrow next-week" @click="navigateWeek(1)">
@@ -169,6 +175,11 @@ const viewTotalCalories = computed(() => {
   
   return filteredTasks.reduce((total, task) => total + (parseInt(task.calories) || 0), 0).toLocaleString()
 })
+
+// Add ref for animation
+const isAnimating = ref(false)
+const waveDirection = ref('left')
+const activeColumnIndex = ref(0)
 
 onMounted(() => {
   console.log('Setting up Firebase subscription...')
@@ -364,11 +375,20 @@ const handleWeekSelect = (date) => {
   showWeekPicker.value = false
 }
 
-// Add method to handle week navigation
+// Update navigateWeek method
 const navigateWeek = (direction) => {
+  isAnimating.value = true
+  waveDirection.value = direction > 0 ? 'left' : 'right'
+  activeColumnIndex.value = 0
   const newDate = new Date(selectedWeekStart.value)
   newDate.setDate(newDate.getDate() + (direction * 7))
   selectedWeekStart.value = newDate
+  
+  // Reset animation after all columns complete
+  setTimeout(() => {
+    isAnimating.value = false
+    activeColumnIndex.value = 0
+  }, 500 * statuses.length)
 }
 
 // Add method to toggle week picker
@@ -510,6 +530,56 @@ const toggleWeekPicker = () => {
   align-items: flex-end;
   padding: 8px 0;
   margin: -8px 0;
+  position: relative;
+}
+
+.wave-animation {
+  animation: wave 0.5s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+.wave-left {
+  animation-name: waveLeft;
+}
+
+.wave-right {
+  animation-name: waveRight;
+}
+
+@keyframes waveLeft {
+  0% {
+    transform: scaleX(1);
+  }
+  25% {
+    transform: scaleX(1.02);
+  }
+  50% {
+    transform: scaleX(0.98);
+  }
+  75% {
+    transform: scaleX(1.01);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes waveRight {
+  0% {
+    transform: scaleX(1);
+  }
+  25% {
+    transform: scaleX(0.98);
+  }
+  50% {
+    transform: scaleX(1.02);
+  }
+  75% {
+    transform: scaleX(0.99);
+  }
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .kanban-column {
@@ -711,6 +781,12 @@ const toggleWeekPicker = () => {
   padding: 0;
   flex-shrink: 0;
   align-self: center;
+  outline: none;
+}
+
+.nav-arrow:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 .nav-arrow:hover {
