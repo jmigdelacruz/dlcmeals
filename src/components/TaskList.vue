@@ -50,15 +50,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch, nextTick } from 'vue'
+import draggable from 'vue-draggable-next'
 
 // Lazy load both TaskCard and draggable
 const TaskCard = defineAsyncComponent(() => 
   import('./TaskCard.vue')
-)
-
-const draggable = defineAsyncComponent(() => 
-  import('vuedraggable')
 )
 
 const props = defineProps({
