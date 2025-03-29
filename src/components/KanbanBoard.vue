@@ -16,6 +16,7 @@
               v-model="selectedWeekStart"
               :is-open="showWeekPicker"
               @close="showWeekPicker = false"
+              @update:modelValue="handleWeekSelect"
             />
           </div>
         </div>
@@ -23,11 +24,11 @@
       <div class="header-links">
         <div class="view-link">
           <a href="#" :class="{ active: activeView === 'daddy' }" @click.prevent="setActiveView('daddy')">Daddy</a>
-          <div v-if="activeView === 'daddy'" class="weekly-total">{{ viewTotalCalories }} kcal</div>
+          <div v-if="activeView === 'daddy'" class="weekly-total" :class="{ 'blink': isWeeklyTotalBlinking }">{{ viewTotalCalories }} kcal</div>
         </div>
         <div class="view-link">
           <a href="#" :class="{ active: activeView === 'family' }" @click.prevent="setActiveView('family')">Family</a>
-          <div v-if="activeView === 'family'" class="weekly-total">{{ viewTotalCalories }} kcal</div>
+          <div v-if="activeView === 'family'" class="weekly-total" :class="{ 'blink': isWeeklyTotalBlinking }">{{ viewTotalCalories }} kcal</div>
         </div>
       </div>
       <button class="add-task-btn" @click="openModal">
@@ -44,7 +45,7 @@
       <button class="nav-arrow prev-week" @click="navigateWeek(-1)">
         <i class="fas fa-chevron-left"></i>
       </button>
-      <div class="columns-container">
+      <div class="columns-container" :key="animationKey">
         <TaskList
           v-for="(status, index) in statuses"
           :key="status"
@@ -80,11 +81,19 @@
       @save="handleTaskSave"
       @delete="handleTaskDelete"
     />
+
+    <div class="active-view">
+      <div class="view-title">{{ activeView === 'daddy' ? 'Daddy' : 'Family' }} View</div>
+      <div class="view-total">
+        <span class="total-label">Weekly Total:</span>
+        <span class="total-value" :class="{ 'blink': isWeeklyTotalBlinking }">{{ totalWeeklyCalories }} kcal</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, defineAsyncComponent, computed } from 'vue'
+import { ref, onMounted, onUnmounted, defineAsyncComponent, computed, watch, nextTick } from 'vue'
 import TaskList from './TaskList.vue'
 import WeekPicker from './WeekPicker.vue'
 import { subscribeToTasks, addTask, updateTask, deleteTask } from '../services/firebaseService'
@@ -180,6 +189,20 @@ const viewTotalCalories = computed(() => {
 const isAnimating = ref(false)
 const waveDirection = ref('left')
 const activeColumnIndex = ref(0)
+
+// Add ref for animation key
+const animationKey = ref(0)
+
+// Add ref for blink animation
+const isWeeklyTotalBlinking = ref(false)
+
+// Update the watcher to watch both totalWeeklyCalories and selectedWeekStart
+watch([totalWeeklyCalories, selectedWeekStart], () => {
+  isWeeklyTotalBlinking.value = true
+  setTimeout(() => {
+    isWeeklyTotalBlinking.value = false
+  }, 1000) // Duration of the blink animation
+})
 
 onMounted(() => {
   console.log('Setting up Firebase subscription...')
@@ -366,34 +389,81 @@ const handleTaskDelete = async (taskId) => {
 }
 
 const setActiveView = (view) => {
-  activeView.value = view
+  // Reset animation state first
+  isAnimating.value = false
+  activeColumnIndex.value = 0
+  animationKey.value++ // Force re-render
+  
+  // Force a re-render by using nextTick
+  nextTick(() => {
+    // Start animation
+    isAnimating.value = true
+    waveDirection.value = 'left'
+    
+    // Update the view
+    activeView.value = view
+    
+    // Reset animation after all columns complete
+    setTimeout(() => {
+      isAnimating.value = false
+      activeColumnIndex.value = 0
+    }, 500 * statuses.length)
+  })
 }
 
-// Add method to handle week selection
+// Update handleWeekSelect method
 const handleWeekSelect = (date) => {
-  selectedWeekStart.value = date
-  showWeekPicker.value = false
+  // Reset animation state first
+  isAnimating.value = false
+  activeColumnIndex.value = 0
+  animationKey.value++ // Force re-render
+  
+  // Force a re-render by using nextTick
+  nextTick(() => {
+    // Start animation
+    isAnimating.value = true
+    waveDirection.value = 'left'
+    
+    // Update the date
+    selectedWeekStart.value = date
+    showWeekPicker.value = false
+    
+    // Reset animation after all columns complete
+    setTimeout(() => {
+      isAnimating.value = false
+      activeColumnIndex.value = 0
+    }, 500 * statuses.length)
+  })
 }
 
 // Update navigateWeek method
 const navigateWeek = (direction) => {
-  isAnimating.value = true
-  waveDirection.value = direction > 0 ? 'left' : 'right'
+  // Reset animation state first
+  isAnimating.value = false
   activeColumnIndex.value = 0
-  const newDate = new Date(selectedWeekStart.value)
-  newDate.setDate(newDate.getDate() + (direction * 7))
-  selectedWeekStart.value = newDate
+  animationKey.value++ // Force re-render
   
-  // Reset animation after all columns complete
-  setTimeout(() => {
-    isAnimating.value = false
-    activeColumnIndex.value = 0
-  }, 500 * statuses.length)
+  // Force a re-render by using nextTick
+  nextTick(() => {
+    // Start animation
+    isAnimating.value = true
+    waveDirection.value = direction > 0 ? 'left' : 'right'
+    
+    // Update the date
+    const newDate = new Date(selectedWeekStart.value)
+    newDate.setDate(newDate.getDate() + (direction * 7))
+    selectedWeekStart.value = newDate
+    
+    // Reset animation after all columns complete
+    setTimeout(() => {
+      isAnimating.value = false
+      activeColumnIndex.value = 0
+    }, 500 * statuses.length)
+  })
 }
 
-// Add method to toggle week picker
+// Update the week-range click handler
 const toggleWeekPicker = () => {
-  console.log('Toggling week picker:', !showWeekPicker.value)
   showWeekPicker.value = !showWeekPicker.value
 }
 </script>
@@ -732,9 +802,9 @@ const toggleWeekPicker = () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 0;
+  padding: 2px 8px 2px 0;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: fit-content;
   margin-left: 0;
   position: relative;
@@ -745,17 +815,26 @@ const toggleWeekPicker = () => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.week-range:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .week-range:hover span {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
+  transform: translateX(2px);
 }
 
 .week-range i {
   font-size: 10px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.week-range:hover i {
+  transform: rotate(15deg);
 }
 
 .modal-overlay,
@@ -814,5 +893,45 @@ const toggleWeekPicker = () => {
   .next-week {
     right: 10px;
   }
+}
+
+@keyframes blink {
+  0% { color: rgba(255, 255, 255, 0.7); }
+  25% { color: #EA7C69; }
+  50% { color: rgba(255, 255, 255, 0.7); }
+  75% { color: #EA7C69; }
+  100% { color: rgba(255, 255, 255, 0.7); }
+}
+
+.weekly-total.blink {
+  animation: blink 1s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: color;
+}
+
+.active-view {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #5B5F63;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.view-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.view-total {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.total-label {
+  font-weight: 500;
+}
+
+.total-value {
+  font-weight: 500;
 }
 </style>

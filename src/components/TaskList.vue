@@ -1,5 +1,5 @@
 <template>
-  <div class="task-list" :class="{ today: isToday }" :style="{ flex: columnWidth }">
+  <div class="task-list" :class="{ today: isToday }" :style="{ flex: columnWidth }" @animationend="$emit('animationend')">
     <div class="task-list-header" :class="{ 'not-today': !isToday }">
       <div class="day-title">
         <h2>{{ formattedTitle }}</h2>
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue'
 
 // Lazy load both TaskCard and draggable
 const TaskCard = defineAsyncComponent(() => 
@@ -72,7 +72,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:tasks', 'task-moved', 'open-task'])
+const emit = defineEmits(['update:tasks', 'task-moved', 'open-task', 'animationend'])
 const isMobile = ref(false)
 const draggableRef = ref(null)
 const canScrollLeft = ref(false)
@@ -267,10 +267,6 @@ const handleDragChange = (evt) => {
     emit('task-moved', taskId, newStatus)
   }
 }
-
-const weeklyTotal = computed(() => {
-  return props.tasks.reduce((sum, task) => sum + (task.calories || 0), 0).toLocaleString()
-})
 </script>
 
 <style scoped>
@@ -311,7 +307,7 @@ const weeklyTotal = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
   flex-shrink: 0;
 }
 
@@ -467,17 +463,33 @@ const weeklyTotal = computed(() => {
 }
 
 .day-title {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  line-height: 1.25;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  padding: 0 0 0.5rem 0;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.day-title h2 {
-  margin: 0;
-  font-size: 18px;
-  color: #ffffff;
+.day-title:hover {
+  transform: translateY(-2px);
+  color: #EA7C69;
+}
+
+.day-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #EA7C69;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.day-title:hover::after {
+  width: 100%;
 }
 
 .day-date {
