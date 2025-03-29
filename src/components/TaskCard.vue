@@ -88,32 +88,32 @@ const formatTitle = (title) => {
   }).join(' ')
 }
 
-const formatDate = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  })
-}
+// const formatDate = (date) => {
+//   if (!date) return ''
+//   const d = new Date(date)
+//   return d.toLocaleDateString('en-US', {
+//     month: 'short',
+//     day: 'numeric'
+//   })
+// }
 
-const formatStatus = (status) => {
-  // Special case for 'todo' status
-  if (status.toLowerCase() === 'todo') {
-    return 'New'
-  }
+// const formatStatus = (status) => {
+//   // Special case for 'todo' status
+//   if (status.toLowerCase() === 'todo') {
+//     return 'New'
+//   }
   
-  return status.split('-').map(word => {
-    // Special case for DLC
-    if (word.toLowerCase() === 'dlc') {
-      return 'DLC'
-    }
-    if (word.toLowerCase() === 'vb') {
-      return 'VB'
-    }
-    return word.charAt(0).toUpperCase() + word.slice(1)
-  }).join(' ')
-}
+//   return status.split('-').map(word => {
+//     // Special case for DLC
+//     if (word.toLowerCase() === 'dlc') {
+//       return 'DLC'
+//     }
+//     if (word.toLowerCase() === 'vb') {
+//       return 'VB'
+//     }
+//     return word.charAt(0).toUpperCase() + word.slice(1)
+//   }).join(' ')
+// }
 </script>
 
 <style scoped>
