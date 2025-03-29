@@ -8,15 +8,8 @@ import {
   query,
   orderBy
 } from 'firebase/firestore'
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject,
-  getStorage
-} from 'firebase/storage'
-import { initializeApp } from 'firebase/app'
-import { db } from '../firebase'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { db, storage } from '../firebase'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -26,10 +19,6 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-const storage = getStorage(app)
 
 // Tasks Collection
 const TASKS_COLLECTION = 'tasks'
@@ -105,36 +94,24 @@ export const deleteTask = async (taskId) => {
   }
 }
 
-// Upload an image
+// Upload image to Firebase Storage
 export const uploadImage = async (file) => {
   try {
-    console.log('Uploading image to Firebase Storage:', file.name)
     const storageRef = ref(storage, `images/${Date.now()}_${file.name}`)
     const snapshot = await uploadBytes(storageRef, file)
-    const downloadURL = await getDownloadURL(snapshot.ref)
-    console.log('Image uploaded successfully:', downloadURL)
-    return {
-      url: downloadURL,
-      name: file.name,
-      type: file.type,
-      size: file.size
-    }
+    const url = await getDownloadURL(snapshot.ref)
+    return url
   } catch (error) {
     console.error('Error uploading image:', error)
     throw error
   }
 }
 
-// Delete an image
-export const deleteImage = async (imageUrl) => {
+// Delete image from Firebase Storage
+export const deleteImage = async (url) => {
   try {
-    console.log('Deleting image from Firebase Storage:', imageUrl)
-    // Extract the path from the URL
-    const url = new URL(imageUrl)
-    const path = decodeURIComponent(url.pathname.split('/o/')[1].split('?')[0])
-    const imageRef = ref(storage, path)
+    const imageRef = ref(storage, url)
     await deleteObject(imageRef)
-    console.log('Image deleted successfully')
   } catch (error) {
     console.error('Error deleting image:', error)
     throw error

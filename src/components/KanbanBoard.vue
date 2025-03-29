@@ -6,6 +6,7 @@
         <div class="date-time">
           <div class="date">{{ currentDate }}</div>
           <div class="time">{{ currentTime }}</div>
+          <div class="week-range">{{ weekRange }}</div>
         </div>
       </div>
       <div class="header-links">
@@ -90,6 +91,18 @@ const currentDate = computed(() => {
   })
 })
 
+// Add computed property for week range
+const weekRange = computed(() => {
+  const today = new Date()
+  const currentDay = today.getDay()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - currentDay + 1) // +1 because we want Monday to be 1
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  
+  return `${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+})
+
 // Add computed property for total weekly calories
 const totalWeeklyCalories = computed(() => {
   return tasks.value.reduce((total, task) => {
@@ -103,7 +116,7 @@ const viewTotalCalories = computed(() => {
     .filter(task => (task.view || 'daddy') === activeView.value)
     .reduce((total, task) => {
       return total + (parseInt(task.calories) || 0)
-    }, 0)
+    }, 0).toLocaleString()
 })
 
 onMounted(() => {
@@ -486,6 +499,9 @@ const setActiveView = (view) => {
 .date-time {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .time {
@@ -494,5 +510,10 @@ const setActiveView = (view) => {
 
 .date {
   opacity: 0.8;
+}
+
+.week-range {
+  font-size: 12px;
+  opacity: 0.7;
 }
 </style>

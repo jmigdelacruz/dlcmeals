@@ -476,6 +476,7 @@ const formatMealType = (type) => {
 
 .task-card.behind-today .task-content {
   text-align: center;
+  align-items: center;
 }
 
 .task-card.behind-today .task-header {

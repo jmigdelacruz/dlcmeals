@@ -267,6 +267,10 @@ const handleDragChange = (evt) => {
     emit('task-moved', taskId, newStatus)
   }
 }
+
+const weeklyTotal = computed(() => {
+  return props.tasks.reduce((sum, task) => sum + (task.calories || 0), 0).toLocaleString()
+})
 </script>
 
 <style scoped>
