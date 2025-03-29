@@ -142,7 +142,6 @@ const handleClickOutside = (event) => {
 
 // Add watch for isOpen prop
 watch(() => props.isOpen, (newValue) => {
-  console.log('WeekPicker isOpen prop changed:', newValue)
   if (newValue) {
     // Add event listener when calendar opens
     setTimeout(() => {
@@ -156,7 +155,6 @@ watch(() => props.isOpen, (newValue) => {
 
 // Add watch for modelValue prop
 watch(() => props.modelValue, (newValue) => {
-  console.log('WeekPicker modelValue prop changed:', newValue)
   if (newValue) {
     currentDate.value = new Date(newValue)
   }

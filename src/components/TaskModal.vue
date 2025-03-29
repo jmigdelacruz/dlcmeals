@@ -96,15 +96,11 @@
                 @change="updateDayFromDate"
                 ref="dateInput"
                 @click="() => {
-                  console.log('Date input clicked');
                   showDatePicker = true;
-                  console.log('showDatePicker set to:', showDatePicker);
                 }"
               >
               <i class="fas fa-calendar-alt" @click="() => {
-                console.log('Calendar icon clicked');
                 showDatePicker = true;
-                console.log('showDatePicker set to:', showDatePicker);
               }"></i>
             </div>
             <div class="week-picker-container">
@@ -113,11 +109,9 @@
                 v-model="form.mealDate"
                 :is-open="showDatePicker"
                 @close="() => {
-                  console.log('WeekPicker close event received');
                   showDatePicker = false;
                 }"
                 @update:modelValue="(value) => {
-                  console.log('WeekPicker value updated:', value);
                   updateDayFromDate();
                 }"
               />
@@ -302,9 +296,7 @@ const newComment = ref('')
 const newCommentAuthor = ref('')
 
 const isEditing = computed(() => {
-  console.log('Computing isEditing, task prop:', props.task)
   const result = !!props.task
-  console.log('isEditing result:', result)
   return result
 })
 
@@ -357,13 +349,7 @@ const updateDayFromDate = () => {
 
 // Watch for changes in the task prop
 watch(() => props.task, (newTask) => {
-  console.log('Task prop changed:', newTask)
   if (newTask) {
-    console.log('Setting form with task data')
-    console.log('Task mealDate:', newTask.mealDate)
-    console.log('Task data:', JSON.stringify(newTask, null, 2))
-    
-    // Format mealDate for the date input if it exists
     let formattedMealDate = ''
     if (newTask.mealDate) {
       const date = new Date(newTask.mealDate)
@@ -379,13 +365,10 @@ watch(() => props.task, (newTask) => {
       comments: newTask.comments || [],
       images: newTask.images || []
     }
-    console.log('Form data after setting:', JSON.stringify(form.value, null, 2))
-    // Update day based on meal date when task is loaded
     if (newTask.mealDate) {
       updateDayFromDate()
     }
   } else {
-    console.log('Resetting form')
     resetForm()
   }
 }, { immediate: true })
@@ -399,7 +382,6 @@ watch(() => props.activeView, (newView) => {
 
 // Add a watch for modalTitle
 watch(() => props.modalTitle, (newTitle) => {
-  console.log('Modal title changed:', newTitle)
 }, { immediate: true })
 
 const closeModal = () => {
@@ -411,9 +393,6 @@ const handleSubmit = async () => {
   try {
     // Create a copy of the form data
     const taskData = { ...form.value }
-    
-    console.log('Original form data:', form.value)
-    console.log('Calories before conversion:', taskData.calories)
     
     // Convert calories to number if it exists and has a value
     if (taskData.calories !== null && taskData.calories !== '') {
@@ -432,13 +411,10 @@ const handleSubmit = async () => {
       delete taskData.id
     }
     
-    console.log('Final task data being saved:', taskData)
-    
     // Emit the save event with the task data
     await emit('save', taskData)
     closeModal()
   } catch (error) {
-    console.error('Error saving task:', error)
     alert('Failed to save task. Please try again.')
   }
 }
@@ -471,12 +447,10 @@ const handleImageDelete = async (index) => {
       try {
         await emit('save', { ...form.value })
       } catch (error) {
-        console.error('Error saving task after image delete:', error)
         // Don't show alert here as the image was deleted successfully
       }
     }
   } catch (error) {
-    console.error('Error deleting image:', error)
     alert('Failed to delete image. Please try again.')
   }
 }
@@ -513,11 +487,10 @@ const handleImageUpload = async (event) => {
         try {
           await emit('save', { ...form.value })
         } catch (error) {
-          console.error('Error saving task after image upload:', error)
+          // Don't show alert here as the image was uploaded successfully
         }
       }
     } catch (error) {
-      console.error('Error uploading image:', error)
       alert('Failed to upload image. Please try again.')
     }
   }

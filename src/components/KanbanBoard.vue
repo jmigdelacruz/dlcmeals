@@ -167,7 +167,6 @@ const viewTotalCalories = computed(() => {
       // Normalize task date to midnight for comparison
       taskDate.setHours(0, 0, 0, 0)
     } catch (error) {
-      console.error('Error parsing date for task:', task.title, error)
       taskDate = new Date(task.createdAt)
       taskDate.setHours(0, 0, 0, 0)
     }
@@ -198,16 +197,13 @@ watch([totalWeeklyCalories, selectedWeekStart], () => {
 })
 
 onMounted(() => {
-  console.log('Setting up Firebase subscription...')
   unsubscribe.value = subscribeToTasks((newTasks) => {
-    console.log('Received tasks from Firebase:', newTasks)
     tasks.value = newTasks
     isLoading.value = false
   })
 })
 
 onUnmounted(() => {
-  console.log('Cleaning up Firebase subscription...')
   if (unsubscribe.value) {
     unsubscribe.value()
   }
@@ -215,12 +211,9 @@ onUnmounted(() => {
 
 const handleTaskMoved = async (taskId, newStatus) => {
   try {
-    console.log('Moving task:', taskId, 'to status:', newStatus)
-    
     // Find the task in the local state
     const taskIndex = tasks.value.findIndex(task => task.id === taskId)
     if (taskIndex === -1) {
-      console.error('Task not found in local state:', taskId)
       return
     }
 
@@ -239,27 +232,20 @@ const handleTaskMoved = async (taskId, newStatus) => {
       status: statusToStore,
       updatedAt: new Date().toISOString()
     }
-
-    console.log('Task moved successfully')
   } catch (error) {
-    console.error('Error moving task:', error)
     alert('Failed to move task. Please check the console for details.')
   }
 }
 
 const handleTaskSave = async (taskData) => {
   try {
-    console.log('Starting task save operation...')
     if (!taskData.title) {
       throw new Error('Task title is required')
     }
 
     if (selectedTask.value?.id) {
-      console.log('Updating existing task:', selectedTask.value.id)
       await updateTask(selectedTask.value.id, taskData)
-      console.log('Task updated successfully')
     } else {
-      console.log('Creating new task:', taskData)
       // Create a clean copy of the task data without any undefined properties
       const cleanTaskData = {
         title: taskData.title,
@@ -274,45 +260,32 @@ const handleTaskSave = async (taskData) => {
         view: activeView.value,
         createdAt: new Date().toISOString()
       }
-      console.log('Clean task data:', cleanTaskData)
       await addTask(cleanTaskData)
-      console.log('New task created successfully')
     }
     showModal.value = false
     selectedTask.value = null
   } catch (error) {
-    console.error('Error saving task:', error)
     alert(`Failed to save task: ${error.message || 'Unknown error occurred'}`)
   }
 }
 
 const openModal = (task = null) => {
-  console.log('Opening modal with task:', task)
   // If task is a PointerEvent (click event), set it to null
   selectedTask.value = task instanceof PointerEvent ? null : task
-  console.log('selectedTask after setting:', selectedTask.value)
-  console.log('Modal title will be:', selectedTask.value ? 'View & Edit Meal' : 'New Meal')
   showModal.value = true
 }
 
 // Add a watch for selectedTask
 watch(selectedTask, (newValue) => {
-  console.log('selectedTask changed:', newValue)
-  console.log('Modal title will be:', newValue ? 'View & Edit Meal' : 'New Meal')
 })
 
 // Add a watch for showModal
 watch(showModal, (newValue) => {
-  console.log('showModal changed:', newValue)
-  console.log('Current selectedTask:', selectedTask.value)
-  console.log('Modal title will be:', selectedTask.value ? 'View & Edit Meal' : 'New Meal')
 })
 
 const closeModal = () => {
-  console.log('Closing modal, current selectedTask:', selectedTask.value)
   showModal.value = false
   selectedTask.value = null
-  console.log('After closing modal, selectedTask:', selectedTask.value)
 }
 
 const formatStatus = (status) => {
@@ -331,10 +304,6 @@ const getTasksByStatus = (status) => {
   sunday.setDate(monday.getDate() + 6)
   sunday.setHours(23, 59, 59, 999)
   
-  console.log('Filtering tasks for status:', formattedStatus)
-  console.log('Week range:', monday.toISOString(), 'to', sunday.toISOString())
-  console.log('Total tasks before filtering:', tasks.value.length)
-  
   const filteredTasks = tasks.value
     .filter(task => {
       const taskView = task.view || 'daddy'
@@ -352,7 +321,6 @@ const getTasksByStatus = (status) => {
           // Normalize task date to midnight for comparison
           taskDate.setHours(0, 0, 0, 0)
         } catch (error) {
-          console.error('Error parsing date for task:', task.title, error)
           taskDate = new Date(task.createdAt)
           taskDate.setHours(0, 0, 0, 0)
         }
@@ -391,7 +359,6 @@ const getTasksByStatus = (status) => {
       return dateA - dateB
     })
     
-  console.log('Filtered tasks for', formattedStatus, ':', filteredTasks.length)
   return filteredTasks
 }
 
@@ -403,11 +370,8 @@ const handleTasksUpdate = (updatedTasks, status) => {
 
 const handleTaskDelete = async (taskId) => {
   try {
-    console.log('Deleting task:', taskId)
     await deleteTask(taskId)
-    console.log('Task deleted successfully')
   } catch (error) {
-    console.error('Error deleting task:', error)
     alert('Failed to delete task. Please check the console for details.')
   }
 }
