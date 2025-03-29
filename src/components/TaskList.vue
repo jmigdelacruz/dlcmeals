@@ -323,9 +323,9 @@ const weeklyTotal = computed(() => {
 
 .task-count {
   background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   color: #ffffff;
   font-weight: 500;
   min-width: 24px;

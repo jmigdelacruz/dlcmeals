@@ -6,9 +6,17 @@
         <div class="date-time">
           <div class="date">{{ currentDate }}</div>
           <div class="time">{{ currentTime }}</div>
-          <div class="week-range" @click="showWeekPicker = true">
-            {{ weekRange }}
-            <i class="fas fa-calendar-alt"></i>
+          <div class="week-range" @click.stop="toggleWeekPicker">
+            <span>
+              {{ weekRange }}
+              <i class="fas fa-calendar-alt"></i>
+            </span>
+            <WeekPicker
+              v-if="showWeekPicker"
+              v-model="selectedWeekStart"
+              :is-open="showWeekPicker"
+              @close="showWeekPicker = false"
+            />
           </div>
         </div>
       </div>
@@ -66,32 +74,13 @@
       @save="handleTaskSave"
       @delete="handleTaskDelete"
     />
-
-    <!-- Add week picker modal -->
-    <div v-if="showWeekPicker" class="modal-overlay" @click="showWeekPicker = false">
-      <div class="week-picker-modal" @click.stop>
-        <div class="week-picker-header">
-          <h3>Select Week</h3>
-          <button class="close-button" @click="showWeekPicker = false">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="week-picker-content">
-          <input 
-            type="date" 
-            v-model="selectedWeekStart"
-            class="week-picker-input"
-            @change="handleWeekSelect(selectedWeekStart)"
-          >
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, defineAsyncComponent, computed } from 'vue'
 import TaskList from './TaskList.vue'
+import WeekPicker from './WeekPicker.vue'
 import { subscribeToTasks, addTask, updateTask, deleteTask } from '../services/firebaseService'
 
 // Lazy load TaskModal
@@ -128,8 +117,8 @@ const currentDate = computed(() => {
 })
 
 // Add new refs for week selection
-const showWeekPicker = ref(false)
 const selectedWeekStart = ref(new Date())
+const showWeekPicker = ref(false)
 
 // Update weekRange computed property
 const weekRange = computed(() => {
@@ -356,6 +345,12 @@ const navigateWeek = (direction) => {
   newDate.setDate(newDate.getDate() + (direction * 7))
   selectedWeekStart.value = newDate
 }
+
+// Add method to toggle week picker
+const toggleWeekPicker = () => {
+  console.log('Toggling week picker:', !showWeekPicker.value)
+  showWeekPicker.value = !showWeekPicker.value
+}
 </script>
 
 <style scoped>
@@ -402,6 +397,19 @@ const navigateWeek = (direction) => {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.view-link:hover a {
+  color: #ffffff;
+}
+
+.view-link:hover a.active::after {
+  left: -8px;
+  right: -8px;
 }
 
 .header-links a {
@@ -427,6 +435,7 @@ const navigateWeek = (direction) => {
   height: 3px;
   background: #EA7C69;
   border-radius: 2px;
+  transition: all 0.2s ease;
 }
 
 .weekly-total {
@@ -465,7 +474,7 @@ const navigateWeek = (direction) => {
   width: 100%;
   position: relative;
   align-items: flex-end;
-  padding: 12px 16px;
+  padding: 12px 0px;
 }
 
 .columns-container {
@@ -610,6 +619,7 @@ const navigateWeek = (direction) => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  align-items: flex-start;
 }
 
 .time {
@@ -624,91 +634,42 @@ const navigateWeek = (direction) => {
   font-size: 12px;
   opacity: 0.7;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 4px;
+  padding: 2px 0;
   border-radius: 4px;
   transition: all 0.2s ease;
+  width: fit-content;
+  margin-left: 0;
+  position: relative;
+  z-index: 1000;
 }
 
-.week-range:hover {
+.week-range span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.week-range:hover span {
   opacity: 1;
   background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .week-range i {
   font-size: 10px;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.week-picker-modal {
-  background: #2D303E;
-  border-radius: 8px;
-  padding: 20px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.week-picker-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.week-picker-header h3 {
-  margin: 0;
-  color: #ffffff;
-  font-size: 16px;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.week-picker-content {
-  display: flex;
-  justify-content: center;
-}
-
+.modal-overlay,
+.week-picker-modal,
+.week-picker-header,
+.week-picker-content,
+.input-group,
 .week-picker-input {
-  background: #1F1D2B;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 8px 12px;
-  color: #ffffff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.week-picker-input:focus {
-  outline: none;
-  border-color: #EA7C69;
+  display: none;
 }
 
 .nav-arrow {
