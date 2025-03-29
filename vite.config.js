@@ -47,7 +47,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor': ['vue', 'vue-draggable-next'],
-          'firebase': ['firebase']
+          'firebase-app': ['firebase/app'],
+          'firebase-firestore': ['firebase/firestore'],
+          'firebase-storage': ['firebase/storage']
         }
       }
     },
