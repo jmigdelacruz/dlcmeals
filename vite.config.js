@@ -46,7 +46,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['vue', 'vue-draggable-next'],
+          'vendor': ['vue', 'vuedraggable'],
           'firebase-app': ['firebase/app'],
           'firebase-firestore': ['firebase/firestore'],
           'firebase-storage': ['firebase/storage']
