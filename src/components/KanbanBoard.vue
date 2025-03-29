@@ -371,6 +371,8 @@ const handleTasksUpdate = (updatedTasks, status) => {
 const handleTaskDelete = async (taskId) => {
   try {
     await deleteTask(taskId)
+    // Remove the task from local state after successful deletion
+    tasks.value = tasks.value.filter(task => task.id !== taskId)
   } catch (error) {
     alert('Failed to delete task. Please check the console for details.')
   }
