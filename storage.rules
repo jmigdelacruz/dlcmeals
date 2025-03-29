@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /images/{imageId} {
+      allow read: if true;  // Anyone can view images
+      allow write: if request.resource.size < 5 * 1024 * 1024  // 5MB max
+                   && request.resource.contentType.matches('image/.*');  // Only images
+      allow delete: if true;  // Anyone can delete images
+    }
+  }
+}
