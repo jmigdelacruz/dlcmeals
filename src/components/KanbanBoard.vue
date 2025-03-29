@@ -6,14 +6,22 @@
         <div class="date-time">
           <div class="date">{{ currentDate }}</div>
           <div class="time">{{ currentTime }}</div>
-          <div class="week-range">{{ weekRange }}</div>
+          <div class="week-range" @click="showWeekPicker = true">
+            {{ weekRange }}
+            <i class="fas fa-calendar-alt"></i>
+          </div>
         </div>
       </div>
       <div class="header-links">
-        <a href="#" :class="{ active: activeView === 'daddy' }" @click.prevent="setActiveView('daddy')">Daddy</a>
-        <a href="#" :class="{ active: activeView === 'family' }" @click.prevent="setActiveView('family')">Family</a>
+        <div class="view-link">
+          <a href="#" :class="{ active: activeView === 'daddy' }" @click.prevent="setActiveView('daddy')">Daddy</a>
+          <div v-if="activeView === 'daddy'" class="weekly-total">{{ viewTotalCalories }} kcal</div>
+        </div>
+        <div class="view-link">
+          <a href="#" :class="{ active: activeView === 'family' }" @click.prevent="setActiveView('family')">Family</a>
+          <div v-if="activeView === 'family'" class="weekly-total">{{ viewTotalCalories }} kcal</div>
+        </div>
       </div>
-      <div class="weekly-total">Total: {{ viewTotalCalories }} kcal</div>
       <button class="add-task-btn" @click="openModal">
         <i class="fas fa-plus"></i> Add Meal
       </button>
@@ -25,15 +33,23 @@
     </div>
 
     <div v-else class="kanban-columns">
-      <TaskList
-        v-for="status in statuses"
-        :key="status"
-        :title="formatStatus(status)"
-        :tasks="getTasksByStatus(status)"
-        @task-moved="handleTaskMoved"
-        @update:tasks="(updatedTasks) => handleTasksUpdate(updatedTasks, status)"
-        @open-task="openModal"
-      />
+      <button class="nav-arrow prev-week" @click="navigateWeek(-1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <div class="columns-container">
+        <TaskList
+          v-for="status in statuses"
+          :key="status"
+          :title="formatStatus(status)"
+          :tasks="getTasksByStatus(status)"
+          @task-moved="handleTaskMoved"
+          @update:tasks="(updatedTasks) => handleTasksUpdate(updatedTasks, status)"
+          @open-task="openModal"
+        />
+      </div>
+      <button class="nav-arrow next-week" @click="navigateWeek(1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
     </div>
 
     <footer class="page-footer">
@@ -50,6 +66,26 @@
       @save="handleTaskSave"
       @delete="handleTaskDelete"
     />
+
+    <!-- Add week picker modal -->
+    <div v-if="showWeekPicker" class="modal-overlay" @click="showWeekPicker = false">
+      <div class="week-picker-modal" @click.stop>
+        <div class="week-picker-header">
+          <h3>Select Week</h3>
+          <button class="close-button" @click="showWeekPicker = false">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="week-picker-content">
+          <input 
+            type="date" 
+            v-model="selectedWeekStart"
+            class="week-picker-input"
+            @change="handleWeekSelect(selectedWeekStart)"
+          >
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -91,12 +127,13 @@ const currentDate = computed(() => {
   })
 })
 
-// Add computed property for week range
+// Add new refs for week selection
+const showWeekPicker = ref(false)
+const selectedWeekStart = ref(new Date())
+
+// Update weekRange computed property
 const weekRange = computed(() => {
-  const today = new Date()
-  const currentDay = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - currentDay + 1) // +1 because we want Monday to be 1
+  const monday = new Date(selectedWeekStart.value)
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
   
@@ -223,26 +260,67 @@ const formatStatus = (status) => {
 }
 
 const getTasksByStatus = (status) => {
-  // Convert the status to match the format in Firestore (with hyphens)
   const formattedStatus = status.toLowerCase().split(' ').join('-')
-  return tasks.value
+  
+  // Create dates for the week range, normalized to midnight
+  const monday = new Date(selectedWeekStart.value)
+  monday.setHours(0, 0, 0, 0)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+  
+  console.log('Filtering tasks for status:', formattedStatus)
+  console.log('Week range:', monday.toISOString(), 'to', sunday.toISOString())
+  console.log('Total tasks before filtering:', tasks.value.length)
+  
+  const filteredTasks = tasks.value
     .filter(task => {
-      // First filter by active view, defaulting to 'daddy' if view is not set
       const taskView = task.view || 'daddy'
       if (taskView === activeView.value) {
         const taskStatus = task.status.toLowerCase()
         if (formattedStatus === 'new' && taskStatus === 'todo') return true
         if (formattedStatus === 'todo' && taskStatus === 'new') return true
-        return taskStatus === formattedStatus
+        
+        // Check if task is within selected week
+        let taskDate
+        try {
+          // Try to parse the mealDate, fallback to createdAt if mealDate is invalid
+          taskDate = task.mealDate ? new Date(task.mealDate) : new Date(task.createdAt)
+          if (isNaN(taskDate.getTime())) {
+            taskDate = new Date(task.createdAt)
+          }
+          // Normalize task date to midnight for comparison
+          taskDate.setHours(0, 0, 0, 0)
+        } catch (error) {
+          console.error('Error parsing date for task:', task.title, error)
+          taskDate = new Date(task.createdAt)
+          taskDate.setHours(0, 0, 0, 0)
+        }
+        
+        const isInWeek = taskDate >= monday && taskDate <= sunday
+        const matchesStatus = taskStatus === formattedStatus
+        
+        console.log('Task matches criteria:', {
+          title: task.title,
+          isInWeek,
+          matchesStatus,
+          taskDate: taskDate.toISOString(),
+          weekStart: monday.toISOString(),
+          weekEnd: sunday.toISOString()
+        })
+        
+        return matchesStatus && isInWeek
       }
       return false
     })
     .sort((a, b) => {
-      // Sort by createdAt timestamp, oldest first
       const dateA = new Date(a.createdAt || a.updatedAt)
       const dateB = new Date(b.createdAt || b.updatedAt)
       return dateA - dateB
     })
+    
+  console.log('Filtered tasks for', formattedStatus, ':', filteredTasks.length)
+  return filteredTasks
 }
 
 const handleTasksUpdate = (updatedTasks, status) => {
@@ -264,6 +342,19 @@ const handleTaskDelete = async (taskId) => {
 
 const setActiveView = (view) => {
   activeView.value = view
+}
+
+// Add method to handle week selection
+const handleWeekSelect = (date) => {
+  selectedWeekStart.value = date
+  showWeekPicker.value = false
+}
+
+// Add method to handle week navigation
+const navigateWeek = (direction) => {
+  const newDate = new Date(selectedWeekStart.value)
+  newDate.setDate(newDate.getDate() + (direction * 7))
+  selectedWeekStart.value = newDate
 }
 </script>
 
@@ -306,6 +397,13 @@ const setActiveView = (view) => {
   border-radius: 8px;
 }
 
+.view-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .header-links a {
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
@@ -332,14 +430,12 @@ const setActiveView = (view) => {
 }
 
 .weekly-total {
-  position: absolute;
-  left: 50%;
-  top: 40px;
-  transform: translateX(-50%);
   color: rgba(255, 255, 255, 0.7);
   font-size: 12px;
   padding: 2px 12px;
   border-radius: 4px;
+  backdrop-filter: blur(4px);
+  margin-top: 4px;
 }
 
 .add-task-btn {
@@ -367,7 +463,19 @@ const setActiveView = (view) => {
   overflow-x: auto;
   padding: 20px 16px;
   width: 100%;
+  position: relative;
   align-items: flex-end;
+  padding: 12px 16px;
+}
+
+.columns-container {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  overflow-x: auto;
+  align-items: flex-end;
+  padding: 8px 0;
+  margin: -8px 0;
 }
 
 .kanban-column {
@@ -515,5 +623,134 @@ const setActiveView = (view) => {
 .week-range {
   font-size: 12px;
   opacity: 0.7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.week-range:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.week-range i {
+  font-size: 10px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.week-picker-modal {
+  background: #2D303E;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.week-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.week-picker-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.week-picker-content {
+  display: flex;
+  justify-content: center;
+}
+
+.week-picker-input {
+  background: #1F1D2B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.week-picker-input:focus {
+  outline: none;
+  border-color: #EA7C69;
+}
+
+.nav-arrow {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.nav-arrow:hover {
+  color: #ffffff;
+}
+
+.nav-arrow i {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    z-index: 100;
+  }
+
+  .prev-week {
+    left: 10px;
+  }
+
+  .next-week {
+    right: 10px;
+  }
 }
 </style>

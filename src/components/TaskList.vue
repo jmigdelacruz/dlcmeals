@@ -287,6 +287,7 @@ const weeklyTotal = computed(() => {
   position: relative;
   height: 100%;
   cursor: pointer;
+  transform-origin: center;
 }
 
 .task-list:hover {
@@ -407,6 +408,8 @@ const weeklyTotal = computed(() => {
   background: #1F1D2B;
   border-radius: 8px;
   transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .task-list.is-today .task-list-content {
