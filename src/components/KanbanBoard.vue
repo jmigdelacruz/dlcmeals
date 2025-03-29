@@ -138,11 +138,36 @@ const totalWeeklyCalories = computed(() => {
 
 // Add computed property for view-specific total calories
 const viewTotalCalories = computed(() => {
-  return tasks.value
-    .filter(task => (task.view || 'daddy') === activeView.value)
-    .reduce((total, task) => {
-      return total + (parseInt(task.calories) || 0)
-    }, 0).toLocaleString()
+  // Create dates for the week range, normalized to midnight
+  const monday = new Date(selectedWeekStart.value)
+  monday.setHours(0, 0, 0, 0)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+  
+  const filteredTasks = tasks.value.filter(task => {
+    const taskView = task.view || 'daddy'
+    if (taskView !== activeView.value) return false
+    
+    let taskDate
+    try {
+      // Try to parse the mealDate, fallback to createdAt if mealDate is invalid
+      taskDate = task.mealDate ? new Date(task.mealDate) : new Date(task.createdAt)
+      if (isNaN(taskDate.getTime())) {
+        taskDate = new Date(task.createdAt)
+      }
+      // Normalize task date to midnight for comparison
+      taskDate.setHours(0, 0, 0, 0)
+    } catch (error) {
+      console.error('Error parsing date for task:', task.title, error)
+      taskDate = new Date(task.createdAt)
+      taskDate.setHours(0, 0, 0, 0)
+    }
+    
+    return taskDate >= monday && taskDate <= sunday
+  })
+  
+  return filteredTasks.reduce((total, task) => total + (parseInt(task.calories) || 0), 0).toLocaleString()
 })
 
 onMounted(() => {
@@ -632,7 +657,7 @@ const toggleWeekPicker = () => {
 
 .week-range {
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.9;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
