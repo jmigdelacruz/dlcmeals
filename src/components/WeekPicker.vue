@@ -34,12 +34,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
-    type: Date,
-    required: true
+    type: [String, Date],
+    default: ''
   },
   isOpen: {
     type: Boolean,
@@ -50,7 +50,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'close'])
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const currentDate = ref(new Date(props.modelValue))
+const currentDate = ref(new Date(props.modelValue || new Date()))
 const hoveredDate = ref(null)
 
 const currentMonthYear = computed(() => {
@@ -113,7 +113,12 @@ const isInHoveredWeek = (date) => {
 }
 
 const selectDate = (date) => {
-  emit('update:modelValue', date)
+  // Format the date as YYYY-MM-DD without timezone conversion
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const formattedDate = `${year}-${month}-${day}`
+  emit('update:modelValue', formattedDate)
   emit('close')
 }
 
@@ -127,18 +132,35 @@ const nextMonth = () => {
 
 // Close calendar when clicking outside
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.week-picker')) {
+  const weekPicker = event.target.closest('.week-picker')
+  const dateInput = event.target.closest('.input-group')
+  const calendarIcon = event.target.closest('.fa-calendar-alt')
+  if (!weekPicker && !dateInput && !calendarIcon) {
     emit('close')
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
+// Add watch for isOpen prop
+watch(() => props.isOpen, (newValue) => {
+  console.log('WeekPicker isOpen prop changed:', newValue)
+  if (newValue) {
+    // Add event listener when calendar opens
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+    }, 0)
+  } else {
+    // Remove event listener when calendar closes
+    document.removeEventListener('click', handleClickOutside)
+  }
 })
 
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+// Add watch for modelValue prop
+watch(() => props.modelValue, (newValue) => {
+  console.log('WeekPicker modelValue prop changed:', newValue)
+  if (newValue) {
+    currentDate.value = new Date(newValue)
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -146,17 +168,18 @@ onUnmounted(() => {
   position: absolute;
   top: 100%;
   left: 0;
-  background: rgba(45, 48, 62, 0.9);
+  background: rgba(45, 48, 62, 0.95);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 9999;
   padding: 12px;
   margin-top: 4px;
   backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .calendar {
-  width: 240px;
+  width: 280px;
 }
 
 .calendar-header {

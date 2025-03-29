@@ -82,14 +82,6 @@
       @save="handleTaskSave"
       @delete="handleTaskDelete"
     />
-
-    <div class="active-view">
-      <div class="view-title">{{ activeView === 'daddy' ? 'Daddy' : 'Family' }} View</div>
-      <div class="view-total">
-        <span class="total-label">Weekly Total:</span>
-        <span class="total-value" :class="{ 'blink': isWeeklyTotalBlinking }">{{ totalWeeklyCalories }} kcal</span>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -938,32 +930,5 @@ const toggleWeekPicker = () => {
 .weekly-total.blink {
   animation: blink 1s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: color;
-}
-
-.active-view {
-  margin-top: 20px;
-  padding: 16px;
-  background-color: #5B5F63;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.view-title {
-  font-size: 18px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.view-total {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.total-label {
-  font-weight: 500;
-}
-
-.total-value {
-  font-weight: 500;
 }
 </style>

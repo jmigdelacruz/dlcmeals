@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="closeModal">
+  <div v-if="isOpen" class="modal-overlay" @click="handleOverlayClick">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>{{ modalTitle }}</h2>
@@ -95,9 +95,32 @@
                 class="form-control"
                 @change="updateDayFromDate"
                 ref="dateInput"
-                @click="$refs.dateInput.showPicker()"
+                @click="() => {
+                  console.log('Date input clicked');
+                  showDatePicker = true;
+                  console.log('showDatePicker set to:', showDatePicker);
+                }"
               >
-              <i class="fas fa-calendar-alt" @click="$refs.dateInput.showPicker()"></i>
+              <i class="fas fa-calendar-alt" @click="() => {
+                console.log('Calendar icon clicked');
+                showDatePicker = true;
+                console.log('showDatePicker set to:', showDatePicker);
+              }"></i>
+            </div>
+            <div class="week-picker-container">
+              <WeekPicker
+                v-if="showDatePicker"
+                v-model="form.mealDate"
+                :is-open="showDatePicker"
+                @close="() => {
+                  console.log('WeekPicker close event received');
+                  showDatePicker = false;
+                }"
+                @update:modelValue="(value) => {
+                  console.log('WeekPicker value updated:', value);
+                  updateDayFromDate();
+                }"
+              />
             </div>
           </div>
 
@@ -236,6 +259,7 @@ import { ref, computed, watch } from 'vue'
 import imageCompression from 'browser-image-compression'
 import { uploadImage, deleteImage } from '../services/firebaseService'
 import OptimizedImage from './OptimizedImage.vue'
+import WeekPicker from './WeekPicker.vue'
 
 const props = defineProps({
   isOpen: {
@@ -272,6 +296,7 @@ const defaultFormState = {
 }
 
 const form = ref({ ...defaultFormState })
+const showDatePicker = ref(false)
 
 const newComment = ref('')
 const newCommentAuthor = ref('')
@@ -540,6 +565,18 @@ const saveCommentEdit = (index) => {
 const cancelCommentEdit = () => {
   editingCommentIndex.value = -1
   editingCommentText.value = ''
+}
+
+const handleOverlayClick = (event) => {
+  // If the click is on the overlay and not on the calendar or its trigger elements
+  const isCalendarClick = event.target.closest('.week-picker') || 
+                         event.target.closest('.input-group') ||
+                         event.target.closest('.fa-calendar-alt')
+  
+  if (!isCalendarClick) {
+    showDatePicker.value = false
+    closeModal()
+  }
 }
 </script>
 
@@ -1202,6 +1239,11 @@ const cancelCommentEdit = () => {
   color: #EA7C69;
   cursor: pointer;
   pointer-events: auto;
+}
+
+.week-picker-container {
+  position: relative;
+  width: 100%;
 }
 
 .status-select {
