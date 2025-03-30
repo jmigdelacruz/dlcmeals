@@ -380,9 +380,6 @@ watch(() => props.activeView, (newView) => {
   }
 }, { immediate: true })
 
-// Add a watch for modalTitle
-watch(() => props.modalTitle, (newTitle) => {
-}, { immediate: true })
 
 const closeModal = () => {
   emit('close')

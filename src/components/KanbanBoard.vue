@@ -285,13 +285,6 @@ const openModal = (task = null) => {
   showModal.value = true
 }
 
-// Add a watch for selectedTask
-watch(selectedTask, (newValue) => {
-})
-
-// Add a watch for showModal
-watch(showModal, (newValue) => {
-})
 
 const closeModal = () => {
   showModal.value = false

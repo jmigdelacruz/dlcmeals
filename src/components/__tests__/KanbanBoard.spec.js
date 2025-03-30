@@ -21,7 +21,7 @@ vi.mock('../../services/firebaseService', () => ({
 }))
 
 // Import after mocking
-import { subscribeToTasks, addTask, updateTask, deleteTask } from '../../services/firebaseService'
+import { deleteTask } from '../../services/firebaseService'
 
 // Mock defineAsyncComponent to return the actual component
 vi.mock('vue', async () => {

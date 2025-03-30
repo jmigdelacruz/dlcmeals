@@ -67,10 +67,6 @@ const openTask = () => {
   emit('open-task', props.task)
 }
 
-const formatMealType = (type) => {
-  if (!type) return ''
-  return type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-}
 
 const formatTitle = (title) => {
   if (!title) return ''
