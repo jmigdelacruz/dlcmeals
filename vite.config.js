@@ -73,7 +73,6 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',

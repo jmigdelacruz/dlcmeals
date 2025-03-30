@@ -1,4 +1,4 @@
-name: Deploy to Firebase Hosting
+name: Continuous Integration
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  build_and_deploy:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,7 +46,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
       
-      - name: ZAP Scan
+      - name: Run ZAP Scan
         uses: zaproxy/action-api-scan@v0.4.0
         with:
           target: http://localhost:4173
@@ -57,15 +57,25 @@ jobs:
           issue_title: ''
           format: openapi
       
+      - name: Ensure Report Directory Exists
+        run: mkdir -p zap_results
+      
       - name: Check ZAP Scan Results
         run: |
           if [ -f "report_json.json" ]; then
             echo "ZAP scan completed successfully"
             cat report_json.json
+            mv report_json.json zap_results/  # Move report to correct folder
           else
             echo "ZAP scan failed to generate report"
             exit 1
           fi
+      
+      - name: Upload ZAP Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-results
+          path: zap_results/
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
