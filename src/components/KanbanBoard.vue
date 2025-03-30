@@ -15,6 +15,7 @@
               v-if="showWeekPicker"
               v-model="selectedWeekStart"
               :is-open="showWeekPicker"
+              :select-week-start="true"
               @close="showWeekPicker = false"
               @update:modelValue="handleWeekSelect"
             />
@@ -408,7 +409,7 @@ const setActiveView = (view) => {
 // Update handleWeekSelect method
 const handleWeekSelect = (weekStart) => {
   isAnimating.value = true
-  selectedWeekStart.value = weekStart
+  selectedWeekStart.value = new Date(weekStart)
 }
 
 // Update navigateWeek method

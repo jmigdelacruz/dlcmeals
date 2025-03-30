@@ -44,6 +44,10 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
+  },
+  selectWeekStart: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -113,14 +117,19 @@ const isInHoveredWeek = (date) => {
 }
 
 const selectDate = (date) => {
-  // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
-  const day = date.getDay()
-  // If it's Sunday (0), go back 6 days to get to Monday
-  // Otherwise, go back (day - 1) days to get to Monday
-  const daysToSubtract = day === 0 ? 6 : day - 1
-  const monday = new Date(date)
-  monday.setDate(date.getDate() - daysToSubtract)
-  emit('update:modelValue', monday.toISOString())
+  if (props.selectWeekStart) {
+    // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
+    const day = date.getDay()
+    // If it's Sunday (0), go back 6 days to get to Monday
+    // Otherwise, go back (day - 1) days to get to Monday
+    const daysToSubtract = day === 0 ? 6 : day - 1
+    const monday = new Date(date)
+    monday.setDate(date.getDate() - daysToSubtract)
+    emit('update:modelValue', monday.toISOString())
+  } else {
+    // For meal date selection, use the exact date
+    emit('update:modelValue', date.toISOString())
+  }
   emit('close')
 }
 

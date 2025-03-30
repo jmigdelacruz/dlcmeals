@@ -5,6 +5,7 @@ import viteCompression from 'vite-plugin-compression2'
 import { imagetools } from 'vite-imagetools'
 import { fileURLToPath, URL } from 'node:url'
 import process from 'node:process'
+import { generateCSPHeader } from './src/config/csp'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -68,6 +69,15 @@ export default defineConfig(({ mode }) => {
           drop_console: true,
           drop_debugger: true
         }
+      }
+    },
+    server: {
+      headers: {
+        'Content-Security-Policy': generateCSPHeader(),
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
       }
     }
   }
