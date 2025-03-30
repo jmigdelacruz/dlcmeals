@@ -3,6 +3,3 @@
 10020	IGNORE	X-Frame-Options Header
 10036	IGNORE	Server Leaks Information via "X-Powered-By" HTTP Response Header Field
 100001	IGNORE	Unexpected Content-Type was returned
-10055	IGNORE	CSP: Failure to Define Directive with No Fallback
-40035	IGNORE	Hidden File Found
-90003	IGNORE	Sub Resource Integrity Attribute Missing
