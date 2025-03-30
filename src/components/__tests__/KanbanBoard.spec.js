@@ -164,19 +164,32 @@ describe('KanbanBoard', () => {
   })
 
   it('filters tasks by week range', async () => {
+    // Set up a specific date for testing (March 18, 2024 - a Monday)
+    const testDate = new Date('2024-03-18')
+    wrapper.vm.selectedWeekStart = testDate
+    
     // Mock tasks for different weeks
     const mockTasks = [
       {
         id: '1',
         title: 'Current Week Meal',
         status: 'monday',
-        mealDate: wrapper.vm.selectedWeekStart.toISOString().split('T')[0]
+        mealDate: '2024-03-18', // Same week as selectedWeekStart
+        view: 'daddy'
       },
       {
         id: '2',
         title: 'Next Week Meal',
         status: 'monday',
-        mealDate: new Date(wrapper.vm.selectedWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        mealDate: '2024-03-25', // Next week
+        view: 'daddy'
+      },
+      {
+        id: '3',
+        title: 'Past Week Meal',
+        status: 'monday',
+        mealDate: '2024-03-11', // Previous week
+        view: 'daddy'
       }
     ]
     
@@ -187,6 +200,10 @@ describe('KanbanBoard', () => {
     const currentWeekTasks = wrapper.vm.getTasksByStatus('monday')
     expect(currentWeekTasks).toHaveLength(1)
     expect(currentWeekTasks[0].title).toBe('Current Week Meal')
+    
+    // Check that past tasks are shown in their correct day column
+    const pastWeekTasks = wrapper.vm.getTasksByStatus('monday')
+    expect(pastWeekTasks).toHaveLength(1) // Only current week's tasks
   })
 
   it('navigates between weeks using nav arrows', async () => {

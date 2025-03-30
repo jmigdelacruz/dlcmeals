@@ -113,12 +113,14 @@ const isInHoveredWeek = (date) => {
 }
 
 const selectDate = (date) => {
-  // Format the date as YYYY-MM-DD without timezone conversion
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const formattedDate = `${year}-${month}-${day}`
-  emit('update:modelValue', formattedDate)
+  // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
+  const day = date.getDay()
+  // If it's Sunday (0), go back 6 days to get to Monday
+  // Otherwise, go back (day - 1) days to get to Monday
+  const daysToSubtract = day === 0 ? 6 : day - 1
+  const monday = new Date(date)
+  monday.setDate(date.getDate() - daysToSubtract)
+  emit('update:modelValue', monday.toISOString())
   emit('close')
 }
 

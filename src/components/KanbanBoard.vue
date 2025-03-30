@@ -51,6 +51,7 @@
           :key="status"
           :title="formatStatus(status)"
           :tasks="getTasksByStatus(status)"
+          :selectedWeekStart="selectedWeekStart"
           :class="{ 
             'wave-animation': isAnimating && activeColumnIndex >= index,
             'wave-left': waveDirection === 'left',
@@ -125,7 +126,16 @@ const currentDate = computed(() => {
 })
 
 // Add new refs for week selection
-const selectedWeekStart = ref(new Date())
+const today = new Date()
+const day = today.getDay()
+// If today is Sunday (0), we want last Monday (6 days ago)
+// If today is Monday (1), we want today
+// For all other days, we want the previous Monday
+const daysToSubtract = day === 0 ? 6 : day - 1
+const monday = new Date(today)
+monday.setDate(today.getDate() - daysToSubtract)
+const selectedWeekStart = ref(monday)
+
 const showWeekPicker = ref(false)
 
 // Update weekRange computed property
@@ -325,7 +335,9 @@ const getTasksByStatus = (status) => {
           taskDate.setHours(0, 0, 0, 0)
         }
         
+        // First check if the task is within the selected week
         const isInWeek = taskDate >= monday && taskDate <= sunday
+        if (!isInWeek) return false
         
         // For tasks with dates behind today, show them in the appropriate day column
         const today = new Date()
@@ -336,20 +348,19 @@ const getTasksByStatus = (status) => {
         if (isBehindToday) {
           const taskDay = taskDate.getDay()
           const dayMap = {
-            0: 'sunday',
             1: 'monday',
             2: 'tuesday',
             3: 'wednesday',
             4: 'thursday',
             5: 'friday',
-            6: 'saturday'
+            6: 'saturday',
+            0: 'sunday'
           }
           return dayMap[taskDay] === formattedStatus
         }
         
         // For current and future tasks, show them based on their status
-        const matchesStatus = taskStatus === formattedStatus
-        return matchesStatus && isInWeek
+        return taskStatus === formattedStatus
       }
       return false
     })
@@ -402,54 +413,17 @@ const setActiveView = (view) => {
 }
 
 // Update handleWeekSelect method
-const handleWeekSelect = (date) => {
-  // Reset animation state first
-  isAnimating.value = false
-  activeColumnIndex.value = 0
-  animationKey.value++ // Force re-render
-  
-  // Force a re-render by using nextTick
-  nextTick(() => {
-    // Start animation
-    isAnimating.value = true
-    waveDirection.value = 'left'
-    
-    // Update the date
-    selectedWeekStart.value = date
-    showWeekPicker.value = false
-    
-    // Reset animation after all columns complete
-    setTimeout(() => {
-      isAnimating.value = false
-      activeColumnIndex.value = 0
-    }, 500 * statuses.length)
-  })
+const handleWeekSelect = (weekStart) => {
+  isAnimating.value = true
+  selectedWeekStart.value = weekStart
 }
 
 // Update navigateWeek method
 const navigateWeek = (direction) => {
-  // Reset animation state first
-  isAnimating.value = false
-  activeColumnIndex.value = 0
-  animationKey.value++ // Force re-render
-  
-  // Force a re-render by using nextTick
-  nextTick(() => {
-    // Start animation
-    isAnimating.value = true
-    waveDirection.value = direction > 0 ? 'left' : 'right'
-    
-    // Update the date
-    const newDate = new Date(selectedWeekStart.value)
-    newDate.setDate(newDate.getDate() + (direction * 7))
-    selectedWeekStart.value = newDate
-    
-    // Reset animation after all columns complete
-    setTimeout(() => {
-      isAnimating.value = false
-      activeColumnIndex.value = 0
-    }, 500 * statuses.length)
-  })
+  isAnimating.value = true
+  const newDate = new Date(selectedWeekStart.value)
+  newDate.setDate(newDate.getDate() + (direction * 7))
+  selectedWeekStart.value = newDate
 }
 
 // Update the week-range click handler
@@ -470,7 +444,7 @@ const toggleWeekPicker = () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   position: relative;
 }
 
@@ -745,7 +719,7 @@ const toggleWeekPicker = () => {
 }
 
 .page-footer {
-  margin-top: 40px;
+  margin-top: 20px;
   padding: 16px;
   text-align: center;
 }

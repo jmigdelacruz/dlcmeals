@@ -8,8 +8,7 @@
       <div class="task-content">
         <p class="description" v-html="truncatedDescription"></p>
         <div class="task-badges">
-          <span class="meal-type-badge">{{ formatMealType(task.mealType) }}</span>
-          <span v-if="task.calories" class="calories-badge">{{ task.calories }} kcal</span>
+          <span class="badge meal-type">{{ task.mealType }} - {{ task.calories }}kcal</span>
         </div>
       </div>
        
@@ -27,8 +26,7 @@
           <h3 class="task-title">{{ formatTitle(task.title) }}</h3>
         </div>
         <div class="task-badges">
-          <span class="meal-type-badge">{{ formatMealType(task.mealType) }}</span>
-          <span v-if="task.calories" class="calories-badge">{{ task.calories }} kcal</span>
+          <span class="badge meal-type">{{ task.mealType }} {{ task.calories }}kcal</span>
         </div>
       </div>
     </template>
@@ -150,20 +148,22 @@ const formatTitle = (title) => {
 .task-badges {
   display: flex;
   gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
-.task-badge {
+.badge {
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.task-badge.resolution {
-  background: rgba(56, 142, 60, 0.2);
-  color: #81c784;
+.badge.meal-type {
+  background: rgba(234, 124, 105, 0.1);
+  color: #EA7C69;
 }
 
 .task-status {

@@ -1,5 +1,5 @@
 <template>
-  <div class="task-list" :class="{ today: isToday }" :style="{ flex: columnWidth }" @animationend="$emit('animationend')">
+  <div class="task-list" :class="{ 'today': isToday, 'behind-today': isBehindToday }" :style="{ flex: columnWidth }" @animationend="$emit('animationend')">
     <div class="task-list-header" :class="{ 'not-today': !isToday }">
       <div class="day-title">
         <h2>{{ formattedTitle }}</h2>
@@ -67,6 +67,10 @@ const props = defineProps({
   tasks: {
     type: Array,
     required: true
+  },
+  selectedWeekStart: {
+    type: Date,
+    required: true
   }
 })
 
@@ -77,30 +81,42 @@ const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
 
 const dayMap = {
-  'sunday': 0,
-  'monday': 1,
-  'tuesday': 2,
-  'wednesday': 3,
-  'thursday': 4,
-  'friday': 5,
-  'saturday': 6
+  'monday': 0,
+  'tuesday': 1,
+  'wednesday': 2,
+  'thursday': 3,
+  'friday': 4,
+  'saturday': 5,
+  'sunday': 6
 }
 
 const isToday = computed(() => {
-  const today = new Date().getDay()
-  return dayMap[props.title.toLowerCase()] === today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const columnDate = new Date(props.selectedWeekStart)
+  columnDate.setDate(columnDate.getDate() + dayMap[props.title.toLowerCase()])
+  columnDate.setHours(0, 0, 0, 0)
+  
+  return columnDate.getTime() === today.getTime()
 })
 
 const columnWidth = computed(() => {
-  const today = new Date().getDay()
-  const currentDay = dayMap[props.title.toLowerCase()]
-  const distance = currentDay - today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const columnDate = new Date(props.selectedWeekStart)
+  columnDate.setDate(columnDate.getDate() + dayMap[props.title.toLowerCase()])
+  columnDate.setHours(0, 0, 0, 0)
+  
+  const distance = columnDate.getTime() - today.getTime()
+  const daysDiff = Math.round(distance / (1000 * 60 * 60 * 24))
   
   // Today's column gets 1.6, the next day gets 1.3, others get progressively smaller
-  if (distance === 0) return 1.6
-  if (distance === 1 || distance === -6) return 1.3  // Handle next day, including Sunday when today is Saturday
-  if (distance === 2 || distance === -5) return 0.6
-  if (distance === 3 || distance === -4) return 0.6
+  if (daysDiff === 0) return 1.6
+  if (daysDiff === 1) return 1.3
+  if (daysDiff === 2) return 0.6
+  if (daysDiff === 3) return 0.6
   return 0.6
 })
 
@@ -113,22 +129,32 @@ const totalCalories = computed(() => {
 })
 
 const isBehindToday = computed(() => {
-  const today = new Date().getDay()
-  const currentDay = dayMap[props.title.toLowerCase()]
-  const distance = currentDay - today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   
-  // If it's the next day (including Sunday when today is Saturday), it's not behind today
-  if (distance === 1 || distance === -6) return false
+  const columnDate = new Date(props.selectedWeekStart)
+  columnDate.setDate(columnDate.getDate() + dayMap[props.title.toLowerCase()])
+  columnDate.setHours(0, 0, 0, 0)
   
-  // For all other days, check if they're before today
-  return currentDay < today
+  // Get the selected week's Monday
+  const weekStart = new Date(props.selectedWeekStart)
+  weekStart.setHours(0, 0, 0, 0)
+  
+  // Get the selected week's Sunday
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6)
+  weekEnd.setHours(23, 59, 59, 999)
+  
+  // Check if this column's date is within the selected week and behind today
+  return columnDate >= weekStart && 
+         columnDate <= weekEnd && 
+         columnDate < today
 })
 
 const formatDayDate = (day) => {
-  const today = new Date()
   const dayIndex = dayMap[day.toLowerCase()]
-  const targetDate = new Date(today)
-  targetDate.setDate(today.getDate() + (dayIndex - today.getDay()))
+  const targetDate = new Date(props.selectedWeekStart)
+  targetDate.setDate(targetDate.getDate() + dayIndex)
   return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
@@ -197,7 +223,7 @@ onUnmounted(() => {
   background: #1F1D2B;
   border-radius: 10px;
   padding: 16px;
-  min-height: 500px;
+  min-height: 550px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -216,7 +242,7 @@ onUnmounted(() => {
 
 .task-list.today {
   z-index: 1;
-  min-height: 550px;
+  min-height: 600px;
   margin: 0;
   padding: 24px;
 }
@@ -466,4 +492,17 @@ onUnmounted(() => {
 .task-list:hover .task-list-header.not-today .day-date {
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* .behind-today {
+  opacity: 0.7;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.behind-today .task-list-header {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.behind-today .task-card {
+  background-color: rgba(0, 0, 0, 0.1);
+} */
 </style> 
