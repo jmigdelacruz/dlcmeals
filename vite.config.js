@@ -88,7 +88,7 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       host: true,
       headers: {
-        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script';",
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com;",
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
@@ -96,7 +96,8 @@ export default defineConfig(({ mode }) => {
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
-        'Cross-Origin-Resource-Policy': 'same-origin'
+        'Cross-Origin-Resource-Policy': 'same-origin',
+        'Content-Type': 'text/html; charset=utf-8'
       }
     }
   }
