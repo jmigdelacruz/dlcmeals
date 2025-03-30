@@ -57,6 +57,16 @@ jobs:
           issue_title: ''
           format: openapi
       
+      - name: Check ZAP Scan Results
+        run: |
+          if [ -f "report_json.json" ]; then
+            echo "ZAP scan completed successfully"
+            cat report_json.json
+          else
+            echo "ZAP scan failed to generate report"
+            exit 1
+          fi
+      
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
