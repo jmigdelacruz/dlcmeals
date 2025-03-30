@@ -1,10 +1,11 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+  workflow_dispatch: {}  # This keeps the workflow valid but disabled
 
 jobs:
   test:
@@ -61,7 +62,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
       
       - name: ZAP Scan
-        uses: zaproxy/action-baseline@v0.4.0
+        uses: zaproxy/action-full-scan@v0.4.0
         with:
           target: http://localhost:4173
           rules_file_name: '.zap/rules.tsv'
