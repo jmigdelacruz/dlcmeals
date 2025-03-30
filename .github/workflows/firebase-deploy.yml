@@ -68,10 +68,6 @@ jobs:
         with:
           target: http://localhost:4173
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -z "config.disablekey=true"'
-          allow_issue_writing: false
-          fail_action: false
-          issue_title: ''
           format: openapi
           artifact_name: zap-report-${{ github.run_id }}-${{ github.run_attempt }}
       
