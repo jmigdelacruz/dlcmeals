@@ -1,4 +1,5 @@
 name: Deploy to Firebase Hosting
+
 on:
   push:
     branches:
@@ -33,6 +34,9 @@ jobs:
       
       - name: Build
         run: npm run build
+      
+      - name: Start the application
+        run: npm run preview &
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -41,6 +45,13 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+      
+      - name: ZAP Scan
+        uses: zaproxy/action-baseline@v0.4.0
+        with:
+          target: http://localhost:4173
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -z "config.disablekey=true"'
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
