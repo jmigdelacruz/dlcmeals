@@ -52,6 +52,10 @@ jobs:
           target: http://localhost:4173
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a -z "config.disablekey=true"'
+          allow_issue_writing: false
+          fail_action: false
+          issue_title: ''
+          format: openapi
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
