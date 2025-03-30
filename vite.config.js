@@ -79,6 +79,17 @@ export default defineConfig(({ mode }) => {
         'X-XSS-Protection': '1; mode=block',
         'Referrer-Policy': 'strict-origin-when-cross-origin'
       }
+    },
+    preview: {
+      port: 4173,
+      host: true,
+      headers: {
+        'Content-Security-Policy': generateCSPHeader(),
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
+      }
     }
   }
 })
