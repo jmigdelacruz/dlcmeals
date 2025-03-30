@@ -46,6 +46,9 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
       
+      - name: Debug GitHub Token
+        run: echo ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run ZAP Scan
         uses: zaproxy/action-api-scan@v0.4.0
         with:
