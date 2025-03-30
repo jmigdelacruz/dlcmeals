@@ -53,6 +53,15 @@ jobs:
       
       - name: Debug GitHub Token
         run: echo ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Test File
+        run: echo "Hello, GitHub Actions!" > test.txt
+
+      - name: Upload Test Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifact  # ✅ Simple valid name
+          path: test.txt
 
       - name: Run ZAP Scan
         uses: zaproxy/action-api-scan@v0.4.0
@@ -64,27 +73,6 @@ jobs:
           fail_action: false
           issue_title: ''
           format: openapi
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Ensure Report Directory Exists
-        run: mkdir -p zap_results
-      
-      - name: Check ZAP Scan Results
-        run: |
-          if [ -f "report_json.json" ]; then
-            echo "ZAP scan completed successfully"
-            cat report_json.json
-            mv report_json.json zap_results/  # Move report to correct folder
-          else
-            echo "ZAP scan failed to generate report"
-            exit 1
-          fi
-      
-      - name: Upload ZAP Scan Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-scan-results
-          path: zap_results/
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master

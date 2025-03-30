@@ -1,6 +1,6 @@
 # DLC Meals
 
-Built with CursorAI - VueJS and Firebase
+VueJS and Firebase with some help from CursorAI
 
 - [x] Lint
 - [x] Unit tests
