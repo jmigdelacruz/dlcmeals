@@ -51,17 +51,6 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
       
-      - name: Debug GitHub Token
-        run: echo ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Create Test File
-        run: echo "Hello, GitHub Actions!" > test.txt
-
-      - name: Upload Test Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-artifact  # ✅ Simple valid name
-          path: test.txt
 
       - name: Run ZAP Scan
         uses: zaproxy/action-api-scan@v0.5.0
