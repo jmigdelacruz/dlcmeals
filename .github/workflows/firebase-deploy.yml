@@ -68,8 +68,12 @@ jobs:
         with:
           target: http://localhost:4173
           rules_file_name: '.zap/rules.tsv'
+          allow_issue_writing: false
+          fail_action: false
+          issue_title: ''
+          artifact_name: zap-report
           format: openapi
-          artifact_name: zap-report-${{ github.run_id }}-${{ github.run_attempt }}
+          
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
