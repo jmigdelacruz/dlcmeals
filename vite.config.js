@@ -69,7 +69,8 @@ export default defineConfig(({ mode }) => {
           drop_console: true,
           drop_debugger: true
         }
-      }
+      },
+      integrity: true
     },
     server: {
       headers: {
@@ -81,18 +82,22 @@ export default defineConfig(({ mode }) => {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Resource-Policy': 'same-origin',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com;"
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script';"
       }
     },
     preview: {
       port: 4173,
       host: true,
       headers: {
-        'Content-Security-Policy': generateCSPHeader(),
+        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script';",
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
-        'Referrer-Policy': 'strict-origin-when-cross-origin'
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Resource-Policy': 'same-origin'
       }
     }
   }
