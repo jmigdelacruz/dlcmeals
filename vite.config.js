@@ -5,7 +5,6 @@ import viteCompression from 'vite-plugin-compression2'
 import { imagetools } from 'vite-imagetools'
 import { fileURLToPath, URL } from 'node:url'
 import process from 'node:process'
-import { generateCSPHeader } from './src/config/csp'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
