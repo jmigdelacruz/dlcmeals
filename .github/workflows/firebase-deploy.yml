@@ -73,6 +73,7 @@ jobs:
           fail_action: false
           issue_title: ''
           format: openapi
+          artifact_name: zap-report-${{ github.run_id }}-${{ github.run_attempt }}
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
