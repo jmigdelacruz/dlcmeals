@@ -6,7 +6,9 @@ import {
   doc, 
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  setDoc,
+  serverTimestamp
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
@@ -113,6 +115,49 @@ export const deleteImage = async (url) => {
     await deleteObject(imageRef)
   } catch (error) {
     console.error('Error deleting image:', error)
+    throw error
+  }
+}
+
+// Add weight-related functions
+export const subscribeToWeights = (callback) => {
+  const weightsRef = collection(db, 'weights')
+  return onSnapshot(weightsRef, (snapshot) => {
+    const weights = {}
+    snapshot.forEach((doc) => {
+      weights[doc.id] = doc.data().weight
+    })
+    callback(weights)
+  })
+}
+
+export const saveWeight = async (date, weight) => {
+  const weightRef = doc(db, 'weights', date)
+  await setDoc(weightRef, { weight }, { merge: true })
+}
+
+// Add new functions for day details
+export const subscribeToDayDetails = (callback) => {
+  const dayDetailsRef = collection(db, 'dayDetails')
+  return onSnapshot(dayDetailsRef, (snapshot) => {
+    const dayDetails = {}
+    snapshot.forEach((doc) => {
+      dayDetails[doc.id] = doc.data()
+    })
+    callback(dayDetails)
+  })
+}
+
+export const saveDayDetails = async (date, weight, cardio) => {
+  try {
+    const docRef = doc(db, 'dayDetails', date)
+    await setDoc(docRef, {
+      weight,
+      cardio,
+      updatedAt: serverTimestamp()
+    }, { merge: true })
+  } catch (error) {
+    console.error('Error saving day details:', error)
     throw error
   }
 } 

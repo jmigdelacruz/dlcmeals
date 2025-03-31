@@ -1,5 +1,5 @@
 <template>
-  <div class="task-list" :class="{ 'today': isToday, 'behind-today': isBehindToday }" :style="{ flex: columnWidth }" @animationend="$emit('animationend')">
+  <div class="task-list" :class="{ 'today': isToday, 'behind-today': isBehindToday }" :style="{ flex: columnWidth }" @animationend="$emit('animationend')" @click="handleColumnClick">
     <div class="task-list-header" :class="{ 'not-today': !isToday }">
       <div class="day-title">
         <h2>{{ formattedTitle }}</h2>
@@ -11,7 +11,7 @@
       <button 
         v-if="isMobile" 
         class="scroll-button scroll-left" 
-        @click="scrollLeft"
+        @click.stop="scrollLeft"
         :disabled="!canScrollLeft"
       >
         <i class="fas fa-chevron-left"></i>
@@ -27,6 +27,10 @@
         ghost-class="ghost-card"
         :direction="isMobile ? 'vertical' : 'horizontal'"
         @change="handleDragChange"
+        @start="isDragging = true"
+        @end="isDragging = false"
+        drag-class="dragging-card"
+        @click.stop
       >
         <template #item="{ element }">
           <TaskCard
@@ -35,13 +39,27 @@
             :isBehindToday="isBehindToday"
             :columnDate="getColumnDate(title)"
             @open-task="$emit('open-task', element)"
+            @click.stop
           />
         </template>
       </draggable>
+      <div class="task-list-footer">
+        <div v-if="hasDayDetails" class="day-details">
+          <span v-if="weight" class="weight-value">
+            <i class="fas fa-weight"></i> {{ weight }} kg
+          </span>
+          <span v-if="cardio" class="cardio-value">
+            <i class="fas fa-running"></i> {{ cardio }} min
+          </span>
+        </div>
+        <div v-else class="day-details-placeholder">
+          Click to add day details
+        </div>
+      </div>
       <button 
         v-if="isMobile" 
         class="scroll-button scroll-right" 
-        @click="scrollRight"
+        @click.stop="scrollRight"
         :disabled="!canScrollRight"
       >
         <i class="fas fa-chevron-right"></i>
@@ -51,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue'
 import draggable from 'vuedraggable/src/vuedraggable'
 
 // Lazy load both TaskCard and draggable
@@ -71,14 +89,23 @@ const props = defineProps({
   selectedWeekStart: {
     type: Date,
     required: true
+  },
+  weight: {
+    type: Number,
+    default: null
+  },
+  cardio: {
+    type: Number,
+    default: null
   }
 })
 
-const emit = defineEmits(['update:tasks', 'task-moved', 'open-task', 'animationend'])
+const emit = defineEmits(['update:tasks', 'task-moved', 'open-task', 'animationend', 'column-click'])
 const isMobile = ref(false)
 const draggableRef = ref(null)
 const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
+const isDragging = ref(false)
 
 const dayMap = {
   'monday': 0,
@@ -159,10 +186,9 @@ const formatDayDate = (day) => {
 }
 
 const getColumnDate = (day) => {
-  const today = new Date()
   const dayIndex = dayMap[day.toLowerCase()]
-  const targetDate = new Date(today)
-  targetDate.setDate(today.getDate() + (dayIndex - today.getDay()))
+  const targetDate = new Date(props.selectedWeekStart)
+  targetDate.setDate(targetDate.getDate() + dayIndex)
   return targetDate.toISOString().split('T')[0]
 }
 
@@ -194,6 +220,19 @@ const scrollRight = () => {
   draggableRef.value.$el.scrollBy({ left: 200, behavior: 'smooth' })
 }
 
+const handleColumnClick = (event) => {
+  // Don't emit if clicking on a task card or scroll button
+  if (event.target.closest('.task-card') || event.target.closest('.scroll-button')) {
+    return
+  }
+  console.log('TaskList: Column clicked, emitting date:', getColumnDate(props.title))
+  emit('column-click', getColumnDate(props.title))
+}
+
+const hasDayDetails = computed(() => {
+  return props.weight !== null || props.cardio !== null
+})
+
 onMounted(() => {
   isMobile.value = window.innerWidth < 768
   window.addEventListener('resize', () => {
@@ -216,6 +255,11 @@ onUnmounted(() => {
     draggableRef.value.$el.removeEventListener('scroll', checkScrollButtons)
   }
 })
+
+// Watch for changes in tasks prop
+watch(() => props.tasks, (newTasks) => {
+  // Handle the update
+}, { deep: true })
 </script>
 
 <style scoped>
@@ -287,6 +331,7 @@ onUnmounted(() => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .scroll-button {
@@ -355,7 +400,11 @@ onUnmounted(() => {
   transition: background-color 0.2s ease;
   position: relative;
   z-index: 1;
+  cursor: pointer;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
 }
+
 
 .task-list.is-today .task-list-content {
   overflow: visible;
@@ -505,4 +554,58 @@ onUnmounted(() => {
 .behind-today .task-card {
   background-color: rgba(0, 0, 0, 0.1);
 } */
+
+.empty-space {
+  min-height: 200px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.empty-space:hover {
+  background-color: #2D303E;
+}
+
+.task-list-footer {
+  padding: 0.75rem;
+  background-color: #2D303E;
+  border-radius: 0 0 8px 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.task-list-footer:hover {
+  background-color: #3D404E;
+  color: #ffffff;
+}
+
+.day-details {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.weight-value, .cardio-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.weight-value i {
+  color: #EA7C69;
+}
+
+.cardio-value i {
+  color: #4CAF50;
+}
+
+.day-details-placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
 </style> 

@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div v-if="isOpen" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
-        <h2>Day details</h2>
+        <h2>Day Details</h2>
         <small>{{ date }}</small>
         <div class="form-group">
           <label for="weight">Weight (kg):</label>
@@ -15,8 +15,18 @@
             class="form-control"
           />
         </div>
+        <div class="form-group">
+          <label for="cardio">Cardio (minutes):</label>
+          <input
+            type="number"
+            id="cardio"
+            v-model="cardio"
+            min="0"
+            class="form-control"
+          />
+        </div>
         <div class="modal-actions">
-          <button @click="saveWeight" class="btn btn-primary">Save</button>
+          <button @click="saveDetails" class="btn btn-primary">Save</button>
           <button @click="closeModal" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
@@ -39,38 +49,49 @@ const props = defineProps({
   existingWeight: {
     type: Number,
     default: null
+  },
+  existingCardio: {
+    type: Number,
+    default: null
   }
 })
 
 // Add watcher for isOpen prop
 watch(() => props.isOpen, (newValue) => {
-  console.log('WeightModal: isOpen prop changed:', newValue)
+  console.log('DayDetailsModal: isOpen prop changed:', newValue)
 })
 
 const emit = defineEmits(['close', 'save'])
 
 const weight = ref(props.existingWeight || '')
+const cardio = ref(props.existingCardio || '')
 
 // Watch for changes in existingWeight prop
 watch(() => props.existingWeight, (newValue) => {
-  console.log('WeightModal: existingWeight changed:', newValue)
+  console.log('DayDetailsModal: existingWeight changed:', newValue)
   weight.value = newValue || ''
 })
 
+// Watch for changes in existingCardio prop
+watch(() => props.existingCardio, (newValue) => {
+  console.log('DayDetailsModal: existingCardio changed:', newValue)
+  cardio.value = newValue || ''
+})
+
 const closeModal = () => {
-  console.log('WeightModal: Closing modal')
+  console.log('DayDetailsModal: Closing modal')
   weight.value = ''
+  cardio.value = ''
   emit('close')
 }
 
-const saveWeight = () => {
-  console.log('WeightModal: Saving weight:', weight.value)
-  if (weight.value) {
-    emit('save', {
-      date: props.date,
-      weight: parseFloat(weight.value)
-    })
-  }
+const saveDetails = () => {
+  console.log('DayDetailsModal: Saving details:', { weight: weight.value, cardio: cardio.value })
+  emit('save', {
+    date: props.date,
+    weight: weight.value ? parseFloat(weight.value) : null,
+    cardio: cardio.value ? parseInt(cardio.value) : null
+  })
 }
 </script>
 
@@ -92,9 +113,9 @@ const saveWeight = () => {
   background-color: #1F1D2B;
   padding: 2rem;
   border-radius: 10px;
-  min-width: 300px;
-  max-width: 90%;
-  color: #ffffff;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -105,6 +126,12 @@ const saveWeight = () => {
   font-weight: 600;
 }
 
+.modal-content small {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -112,8 +139,7 @@ const saveWeight = () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
+  color: #ffffff;
   font-weight: 500;
 }
 
@@ -122,16 +148,15 @@ const saveWeight = () => {
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  font-size: 1rem;
   background-color: #2D303E;
   color: #ffffff;
-  transition: all 0.2s ease;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
 }
 
 .form-control:focus {
   outline: none;
   border-color: #EA7C69;
-  box-shadow: 0 0 0 2px rgba(234, 124, 105, 0.2);
 }
 
 .modal-actions {
@@ -145,34 +170,27 @@ const saveWeight = () => {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-primary {
   background-color: #EA7C69;
-  color: white;
+  color: #ffffff;
 }
 
 .btn-primary:hover {
   background-color: #d86b57;
-  transform: translateY(-1px);
 }
 
 .btn-secondary {
   background-color: #2D303E;
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
 }
 
 .btn-secondary:hover {
-  background-color: #3D404E;
-  color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.btn:active {
-  transform: translateY(0);
+  background-color: #3D414E;
 }
 </style> 

@@ -52,7 +52,9 @@
           :key="status"
           :title="formatStatus(status)"
           :tasks="getTasksByStatus(status)"
-          :selectedWeekStart="selectedWeekStart"
+          :selected-week-start="selectedWeekStart"
+          :weight="getDetailsForDate(getColumnDate(status)).weight"
+          :cardio="getDetailsForDate(getColumnDate(status)).cardio"
           :class="{ 
             'wave-animation': isAnimating && activeColumnIndex >= index,
             'wave-left': waveDirection === 'left',
@@ -62,6 +64,7 @@
           @update:tasks="(updatedTasks) => handleTasksUpdate(updatedTasks, status)"
           @open-task="openModal"
           @animationend="activeColumnIndex = index + 1"
+          @column-click="openDayDetailsModal"
         />
       </div>
       <button class="nav-arrow next-week" @click="navigateWeek(1)">
@@ -84,6 +87,23 @@
       @save="handleTaskSave"
       @delete="handleTaskDelete"
     />
+
+    <WeightModal
+      :isOpen="showWeightModal"
+      :date="selectedDate"
+      :existing-weight="getWeightForDate(selectedDate)"
+      @close="closeWeightModal"
+      @save="handleWeightSave"
+    />
+
+    <DayDetailsModal
+      :isOpen="showDayDetailsModal"
+      :date="selectedDate"
+      :existing-weight="getDetailsForDate(selectedDate).weight"
+      :existing-cardio="getDetailsForDate(selectedDate).cardio"
+      @close="closeDayDetailsModal"
+      @save="handleDayDetailsSave"
+    />
   </div>
 </template>
 
@@ -91,7 +111,10 @@
 import { ref, onMounted, onUnmounted, defineAsyncComponent, computed, watch, nextTick } from 'vue'
 import TaskList from './TaskList.vue'
 import WeekPicker from './WeekPicker.vue'
-import { subscribeToTasks, addTask, updateTask, deleteTask } from '../services/firebaseService'
+import WeightModal from './WeightModal.vue'
+import DayDetailsModal from './DayDetailsModal.vue'
+import { subscribeToTasks, addTask, updateTask, deleteTask, subscribeToWeights, saveWeight, subscribeToDayDetails, saveDayDetails } from '../services/firebaseService'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 // Lazy load TaskModal
 const TaskModal = defineAsyncComponent(() => 
@@ -207,16 +230,41 @@ watch([totalWeeklyCalories, selectedWeekStart], () => {
   }, 1000) // Duration of the blink animation
 })
 
+// Add new refs for weight modal
+const showWeightModal = ref(false)
+const selectedDate = ref('')
+
+// Add weight data management
+const weights = ref({})
+const weightsUnsubscribe = ref(null)
+
+// Add new refs for day details
+const showDayDetailsModal = ref(false)
+const dayDetails = ref({})
+
 onMounted(() => {
   unsubscribe.value = subscribeToTasks((newTasks) => {
     tasks.value = newTasks
     isLoading.value = false
+  })
+  
+  // Subscribe to weight data
+  weightsUnsubscribe.value = subscribeToWeights((newWeights) => {
+    weights.value = newWeights
+  })
+
+  // Subscribe to day details
+  weightsUnsubscribe.value = subscribeToDayDetails((newDayDetails) => {
+    dayDetails.value = newDayDetails
   })
 })
 
 onUnmounted(() => {
   if (unsubscribe.value) {
     unsubscribe.value()
+  }
+  if (weightsUnsubscribe.value) {
+    weightsUnsubscribe.value()
   }
 })
 
@@ -285,7 +333,6 @@ const openModal = (task = null) => {
   selectedTask.value = task instanceof PointerEvent ? null : task
   showModal.value = true
 }
-
 
 const closeModal = () => {
   showModal.value = false
@@ -424,6 +471,105 @@ const navigateWeek = (direction) => {
 const toggleWeekPicker = () => {
   showWeekPicker.value = !showWeekPicker.value
 }
+
+// Add new methods for weight modal
+const openWeightModal = (date) => {
+  console.log('KanbanBoard: Opening weight modal for date:', date)
+  selectedDate.value = date
+  showWeightModal.value = true
+  console.log('KanbanBoard: Modal state after opening:', {
+    showWeightModal: showWeightModal.value,
+    selectedDate: selectedDate.value
+  })
+}
+
+const handleWeightSave = async (weightData) => {
+  try {
+    console.log('KanbanBoard: Saving weight data:', weightData)
+    await saveWeight(weightData.date, weightData.weight)
+    closeWeightModal()
+  } catch (error) {
+    console.error('KanbanBoard: Error saving weight:', error)
+  }
+}
+
+const closeWeightModal = () => {
+  console.log('KanbanBoard: Closing weight modal')
+  showWeightModal.value = false
+  selectedDate.value = ''
+}
+
+// Add watcher for modal state
+watch(showWeightModal, (newValue) => {
+  console.log('KanbanBoard: Modal visibility changed:', newValue)
+})
+
+// Add method to get weight for a specific date
+const getWeightForDate = (date) => {
+  console.log('Getting weight for date:', date)
+  console.log('Available weights:', weights.value)
+  return weights.value[date] || null
+}
+
+// Add method to get column date
+const getColumnDate = (status) => {
+  const dayMap = {
+    'monday': 0,
+    'tuesday': 1,
+    'wednesday': 2,
+    'thursday': 3,
+    'friday': 4,
+    'saturday': 5,
+    'sunday': 6
+  }
+  
+  const columnDate = new Date(selectedWeekStart.value)
+  columnDate.setDate(columnDate.getDate() + dayMap[status.toLowerCase()])
+  const dateString = columnDate.toISOString().split('T')[0]
+  console.log('Column date for', status, ':', dateString)
+  return dateString
+}
+
+// Add new methods for day details modal
+const openDayDetailsModal = (date) => {
+  console.log('KanbanBoard: Opening day details modal for date:', date)
+  selectedDate.value = date
+  showDayDetailsModal.value = true
+  // Load existing data if available
+  const existingData = dayDetails.value[date] || {}
+  dayDetails.value[date] = existingData
+  console.log('KanbanBoard: Modal state after opening:', {
+    showDayDetailsModal: showDayDetailsModal.value,
+    selectedDate: selectedDate.value,
+    existingData
+  })
+}
+
+const handleDayDetailsSave = async (details) => {
+  try {
+    console.log('KanbanBoard: Saving day details:', details)
+    await saveDayDetails(details.date, details.weight, details.cardio)
+    closeDayDetailsModal()
+  } catch (error) {
+    console.error('KanbanBoard: Error saving day details:', error)
+  }
+}
+
+const closeDayDetailsModal = () => {
+  console.log('KanbanBoard: Closing day details modal')
+  showDayDetailsModal.value = false
+  selectedDate.value = ''
+}
+
+// Add method to get details for a specific date
+const getDetailsForDate = (date) => {
+  return dayDetails.value[date] || { weight: null, cardio: null }
+}
+
+// Add watcher for modal state
+watch(showDayDetailsModal, (newValue) => {
+  console.log('KanbanBoard: Modal visibility changed:', newValue)
+})
 </script>
 
 <style scoped>
