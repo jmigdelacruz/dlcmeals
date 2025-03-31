@@ -56,22 +56,14 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
       
       - name: Run ZAP Scan
-        uses: zaproxy/action-api-scan@v0.4.0
-        with:
-          target: http://localhost:4173  # 🔍 Update to your local server
-          rules_file_name: '.zap/rules.tsv'  # 🔧 (Optional) Exclude rules
-          cmd_options: '-a -z "config.disablekey=true"'
-          allow_issue_writing: false
-          fail_action: false
-          issue_title: 'ZAP Security Scan Report'
-          format: openapi
-
-      - name: Upload ZAP Scan Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-scan-report
-          path: zap_results/  # 📂 Make sure this is the correct path
-          if-no-files-found: error  # Fail if no report is generated
+        run: |
+          docker pull owasp/zap2docker-stable
+          docker run --rm --network host -v $(pwd):/zap/wrk/:rw \
+            -t owasp/zap2docker-stable zap-baseline.py \
+            -t http://localhost:4173 \
+            -c zap.conf \
+            -r zap-report.html \
+            -z "config.disablekey=true;config.ignorelist=zap-ignore.conf"
       
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
