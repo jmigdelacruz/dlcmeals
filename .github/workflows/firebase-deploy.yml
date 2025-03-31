@@ -58,7 +58,7 @@ jobs:
       - name: Run ZAP Scan
         run: |
           docker run --rm -v $(pwd):/zap/wrk/:rw \
-            -t owasp/zap2docker-stable zap-baseline.py \
+            -t zaproxy/zaproxy:stable zap-baseline.py \
             -t http://host.docker.internal:4173 \
             -c zap.conf \
             -r zap-report.html \
