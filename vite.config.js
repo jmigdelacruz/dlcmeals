@@ -160,6 +160,36 @@ export default defineConfig(({ mode }) => {
       fs: {
         strict: true,
         allow: ['dist']
+      },
+      middleware: (req, res, next) => {
+        // Block access to system files and directories
+        const blockedPaths = [
+          '/WEB-INF',
+          '/._',
+          '/.bzr',
+          '/.darcs',
+          '/.git',
+          '/.hg',
+          '/.svn',
+          '/.idea',
+          '/.vscode',
+          '/.DS_Store',
+          '/node_modules',
+          '/.env',
+          '/.env.*',
+          '/package-lock.json',
+          '/yarn.lock',
+          '/pnpm-lock.yaml'
+        ]
+
+        if (blockedPaths.some(path => req.url.startsWith(path))) {
+          res.statusCode = 403
+          res.setHeader('Content-Type', 'text/plain')
+          res.end('Access Forbidden')
+          return
+        }
+
+        next()
       }
     }
   }

@@ -18,7 +18,12 @@
       "**/.svn",
       "**/.idea",
       "**/.vscode",
-      "**/*.log"
+      "**/*.log",
+      "**/WEB-INF/**",
+      "**/.env*",
+      "**/package-lock.json",
+      "**/yarn.lock",
+      "**/pnpm-lock.yaml"
     ],
     "rewrites": [
       {
@@ -65,6 +70,19 @@
           {
             "key": "Content-Security-Policy",
             "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://*.firebasestorage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+          }
+        ]
+      },
+      {
+        "source": "**/WEB-INF/**",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
           }
         ]
       },
