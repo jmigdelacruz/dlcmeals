@@ -442,21 +442,43 @@ const deleteComment = (index) => {
 }
 
 const handleImageDelete = async (index) => {
-  const image = form.value.images[index]
   try {
+    // Check if the image exists at the given index
+    if (!form.value.images || !form.value.images[index]) {
+      console.error('No image found at index:', index)
+      return
+    }
+
+    const image = form.value.images[index]
+    console.log('Attempting to delete image:', image)
+
+    // Get the URL - handle both string URLs and image objects
+    const imageUrl = typeof image === 'string' ? image : image.url
+    if (!imageUrl) {
+      console.error('No valid URL found for image:', image)
+      return
+    }
+
     // Delete from Firebase Storage using the full URL
-    await deleteImage(image.url)
+    await deleteImage(imageUrl)
+    console.log('Image deleted successfully from Firebase Storage')
+
     // Remove from form
     form.value.images.splice(index, 1)
+    console.log('Image removed from form')
+
     // Only save the task if we're editing an existing task
     if (isEditing.value && props.task?.id) {
       try {
         await emit('save', { ...form.value })
+        console.log('Task updated after image deletion')
       } catch (error) {
+        console.error('Error updating task after image deletion:', error)
         // Don't show alert here as the image was deleted successfully
       }
     }
   } catch (error) {
+    console.error('Error in handleImageDelete:', error)
     alert('Failed to delete image. Please try again.')
   }
 }

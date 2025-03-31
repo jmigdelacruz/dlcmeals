@@ -96,10 +96,15 @@ export const deleteTask = async (taskId) => {
 // Upload image to Firebase Storage
 export const uploadImage = async (file) => {
   try {
+    console.log('Starting image upload:', file.name)
     const storageRef = ref(storage, `images/${Date.now()}_${file.name}`)
+    console.log('Storage reference:', storageRef.fullPath)
     const snapshot = await uploadBytes(storageRef, file)
+    console.log('Upload completed:', snapshot.ref.fullPath)
     const url = await getDownloadURL(snapshot.ref)
-    return url
+    console.log('Download URL:', url)
+    // Store the full URL in the object
+    return { url, path: snapshot.ref.fullPath }
   } catch (error) {
     console.error('Error uploading image:', error)
     throw error
@@ -109,8 +114,32 @@ export const uploadImage = async (file) => {
 // Delete image from Firebase Storage
 export const deleteImage = async (url) => {
   try {
-    const imageRef = ref(storage, url)
+    if (!url) {
+      throw new Error('Image URL is required')
+    }
+
+    // Log the URL for debugging
+    console.log('Attempting to delete image with URL:', url)
+
+    // Extract the path from the full URL
+    let path
+    try {
+      const urlObj = new URL(url)
+      // The path will be in the format: /v0/b/{bucket}/o/{path}?alt=media&token={token}
+      const pathMatch = urlObj.pathname.match(/\/v0\/b\/[^/]+\/o\/(.+)/)
+      if (!pathMatch) {
+        throw new Error('Invalid Firebase Storage URL format')
+      }
+      path = decodeURIComponent(pathMatch[1].split('?')[0])
+    } catch (urlError) {
+      console.error('Error parsing URL:', urlError)
+      throw new Error('Invalid image URL format')
+    }
+
+    console.log('Extracted path:', path)
+    const imageRef = ref(storage, path)
     await deleteObject(imageRef)
+    console.log('Image deleted successfully')
   } catch (error) {
     console.error('Error deleting image:', error)
     throw error

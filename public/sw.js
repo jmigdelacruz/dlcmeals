@@ -63,6 +63,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for Firebase Storage URLs
+  if (event.request.url.includes('firebasestorage.googleapis.com')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {

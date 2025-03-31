@@ -13,14 +13,28 @@
       </div>
        
       <div class="task-image-container">
-        <img v-if="task.images && task.images.length > 0" :src="task.images[0].url" :alt="task.title" class="task-image" />
+        <OptimizedImage
+          v-if="task.images && task.images.length > 0 && task.images[0].url"
+          :src="task.images[0].url"
+          :alt="task.title"
+          :width="120"
+          :height="120"
+          class="task-image"
+        />
       </div>
     </template>
 
     <template v-else>
       <div class="task-content">
         <div class="task-image-container" v-if="!isBehindToday">
-          <img v-if="task.images && task.images.length > 0" :src="task.images[0].url" :alt="task.title" class="task-image" />
+          <OptimizedImage
+            v-if="task.images && task.images.length > 0 && task.images[0].url"
+            :src="task.images[0].url"
+            :alt="task.title"
+            :width="50"
+            :height="50"
+            class="task-image"
+          />
         </div>
         <div class="task-header">
           <h3 class="task-title">{{ formatTitle(task.title) }}</h3>
@@ -35,6 +49,7 @@
 
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue'
+import OptimizedImage from './OptimizedImage.vue'
 
 const props = defineProps({
   task: {
