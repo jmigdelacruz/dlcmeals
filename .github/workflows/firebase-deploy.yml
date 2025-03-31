@@ -63,13 +63,14 @@ jobs:
             -c zap.conf \
             -r zap-report.html \
             -z "config.disablekey=true;config.ignorelist=zap-ignore.conf"
-      
+
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v3
         with:
           name: zap-report
           path: zap-report.html
-          
+          retention-days: 7
+      
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
