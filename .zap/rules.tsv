@@ -2,4 +2,4 @@
 10038	IGNORE	Content Security Policy (CSP) Header Not Set
 10020	IGNORE	X-Frame-Options Header
 10036	IGNORE	Server Leaks Information via "X-Powered-By" HTTP Response Header Field
-100001	IGNORE	Unexpected Content-Type was returned
+10015	IGNORE	Unexpected Content-Type was returned
