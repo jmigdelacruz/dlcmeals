@@ -112,7 +112,13 @@ export default defineConfig(({ mode }) => {
           },
           entryFileNames: 'assets/[name].[hash].js',
           chunkFileNames: 'assets/[name].[hash].js',
-          assetFileNames: 'assets/[name].[hash].[ext]'
+          assetFileNames: 'assets/[name].[hash].[ext]',
+          headers: {
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Embedder-Policy': 'require-corp',
+            'Cross-Origin-Resource-Policy': 'cross-origin',
+            'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://*.firebasestorage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+          }
         }
       },
       chunkSizeWarningLimit: 1000,
@@ -137,7 +143,7 @@ export default defineConfig(({ mode }) => {
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
         'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Resource-Policy': 'cross-origin',
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://*.firebasestorage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; require-trusted-types-for 'script'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
       }
@@ -146,14 +152,8 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       host: true,
       headers: {
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://*.firebasestorage.googleapis.com; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';",
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
         'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Resource-Policy': 'cross-origin',
         'Content-Type': 'text/html; charset=utf-8'
       },
