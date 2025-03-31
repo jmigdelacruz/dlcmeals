@@ -182,13 +182,18 @@ export default defineConfig(({ mode }) => {
           '/pnpm-lock.yaml'
         ]
 
+        // Check if the request URL matches any blocked paths
         if (blockedPaths.some(path => req.url.startsWith(path))) {
           res.statusCode = 403
-          res.setHeader('Content-Type', 'text/plain')
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+          res.setHeader('X-Content-Type-Options', 'nosniff')
           res.end('Access Forbidden')
           return
         }
 
+        // For all other requests, ensure proper Content-Type
+        res.setHeader('X-Content-Type-Options', 'nosniff')
         next()
       }
     }
