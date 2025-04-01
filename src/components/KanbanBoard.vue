@@ -32,9 +32,14 @@
           <div v-if="activeView === 'family'" class="weekly-total" :class="{ 'blink': isWeeklyTotalBlinking }">{{ viewTotalCalories }} kcal</div>
         </div>
       </div>
-      <button class="add-task-btn" @click="openModal">
-        <i class="fas fa-plus"></i> Add Meal
-      </button>
+      <div class="kanban-actions">
+        <button class="add-task-btn" @click="openModal">
+          <i class="fas fa-plus"></i> Add Meal
+        </button>
+        <button class="btn-analytics" @click="openAnalytics">
+          <i class="fas fa-chart-line"></i> Analytics
+        </button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading-container">
@@ -525,7 +530,13 @@ const getColumnDate = (status) => {
   
   const columnDate = new Date(selectedWeekStart.value)
   columnDate.setDate(columnDate.getDate() + dayMap[status.toLowerCase()])
-  const dateString = columnDate.toISOString().split('T')[0]
+  
+  // Format the date in YYYY-MM-DD format in local time
+  const year = columnDate.getFullYear()
+  const month = String(columnDate.getMonth() + 1).padStart(2, '0')
+  const day = String(columnDate.getDate()).padStart(2, '0')
+  const dateString = `${year}-${month}-${day}`
+  
   console.log('Column date for', status, ':', dateString)
   return dateString
 }
@@ -537,7 +548,6 @@ const openDayDetailsModal = (date) => {
   showDayDetailsModal.value = true
   // Load existing data if available
   const existingData = dayDetails.value[date] || {}
-  dayDetails.value[date] = existingData
   console.log('KanbanBoard: Modal state after opening:', {
     showDayDetailsModal: showDayDetailsModal.value,
     selectedDate: selectedDate.value,
@@ -570,6 +580,11 @@ const getDetailsForDate = (date) => {
 watch(showDayDetailsModal, (newValue) => {
   console.log('KanbanBoard: Modal visibility changed:', newValue)
 })
+
+const openAnalytics = () => {
+  // TODO: Implement analytics view
+  console.log('Opening analytics view')
+}
 </script>
 
 <style scoped>
@@ -666,6 +681,12 @@ watch(showDayDetailsModal, (newValue) => {
   margin-top: 4px;
 }
 
+.kanban-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .add-task-btn {
   background-color: #EA7C69;
   color: white;
@@ -678,11 +699,35 @@ watch(showDayDetailsModal, (newValue) => {
   gap: 8px;
   font-size: 14px;
   transition: background-color 0.2s;
-  margin-top: 4px;
 }
 
 .add-task-btn:hover {
   background-color: #d86b57;
+}
+
+.btn-analytics {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-analytics:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-analytics i {
+  font-size: 14px;
 }
 
 .kanban-columns {

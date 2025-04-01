@@ -101,7 +101,11 @@ export const uploadImage = async (file) => {
     const storageRef = ref(storage, `images/${Date.now()}_${file.name}`)
     const snapshot = await uploadBytes(storageRef, file)
     const url = await getDownloadURL(snapshot.ref)
-    return url
+    console.log('Uploaded image URL:', url)
+    return {
+      url: url,
+      filename: snapshot.ref.name
+    }
   } catch (error) {
     console.error('Error uploading image:', error)
     throw error
@@ -109,10 +113,13 @@ export const uploadImage = async (file) => {
 }
 
 // Delete image from Firebase Storage
-export const deleteImage = async (url) => {
+export const deleteImage = async (filename) => {
   try {
-    const imageRef = ref(storage, url)
+    if (!filename) return
+
+    const imageRef = ref(storage, `images/${filename}`)
     await deleteObject(imageRef)
+    console.log('Image deleted successfully')
   } catch (error) {
     console.error('Error deleting image:', error)
     throw error

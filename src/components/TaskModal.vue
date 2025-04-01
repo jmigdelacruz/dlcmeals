@@ -150,7 +150,7 @@
           <div class="image-upload-container">
             <div class="image-preview-grid">
               <div v-if="form.images.length > 0" class="image-preview" @click="openImageModal(form.images[0])">
-                <img :src="form.images[0].url" alt="Meal image">
+                <img :src="form.images[0].url" alt="Meal image" @error="handleImageError">
                 <button type="button" class="delete-image" @click.stop="handleImageDelete(0)">×</button>
               </div>
               <div class="image-upload-input">
@@ -444,8 +444,8 @@ const deleteComment = (index) => {
 const handleImageDelete = async (index) => {
   const image = form.value.images[index]
   try {
-    // Delete from Firebase Storage using the full URL
-    await deleteImage(image.url)
+    // Delete from Firebase Storage using the filename
+    await deleteImage(image.filename)
     // Remove from form
     form.value.images.splice(index, 1)
     // Only save the task if we're editing an existing task
@@ -453,10 +453,12 @@ const handleImageDelete = async (index) => {
       try {
         await emit('save', { ...form.value })
       } catch (error) {
+        console.error('Error saving task after image delete:', error)
         // Don't show alert here as the image was deleted successfully
       }
     }
   } catch (error) {
+    console.error('Error deleting image:', error)
     alert('Failed to delete image. Please try again.')
   }
 }
@@ -473,33 +475,47 @@ const handleImageUpload = async (event) => {
         await handleImageDelete(0)
       }
 
-      if (file.type === 'image/png') {
-        const imageData = await uploadImage(file)
-        form.value.images = [imageData]
-      } else {
-        const options = {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-          format: 'image/png'
-        }
-        const compressedFile = await imageCompression(file, options)
-        const imageData = await uploadImage(compressedFile)
-        form.value.images = [imageData]
+      // Always compress the image regardless of type
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: false,
+        format: 'image/jpeg' // Change to JPEG for better compatibility
       }
+      
+      const compressedFile = await imageCompression(file, options)
+      console.log('Compressed file:', compressedFile)
+      
+      const imageData = await uploadImage(compressedFile)
+      console.log('Uploaded image data:', imageData)
+      
+      // Ensure the image data has both url and filename
+      if (!imageData.url || !imageData.filename) {
+        throw new Error('Invalid image data received')
+      }
+      
+      form.value.images = [imageData]
       
       // Only save the task if we're editing an existing task
       if (isEditing.value && props.task?.id) {
         try {
           await emit('save', { ...form.value })
         } catch (error) {
+          console.error('Error saving task after image upload:', error)
           // Don't show alert here as the image was uploaded successfully
         }
       }
     } catch (error) {
+      console.error('Error uploading image:', error)
       alert('Failed to upload image. Please try again.')
     }
   }
+}
+
+const handleImageError = (event) => {
+  console.error('Image failed to load:', event.target.src)
+  // Remove the broken image
+  form.value.images = []
 }
 
 const formatDate = (date) => {

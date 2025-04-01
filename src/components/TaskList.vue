@@ -46,14 +46,14 @@
       <div class="task-list-footer">
         <div v-if="hasDayDetails" class="day-details">
           <span v-if="weight" class="weight-value">
-            <i class="fas fa-weight"></i> {{ weight }} kg
+            <i class="fas fa-weight"></i> <span>{{ weight }}<span class="measure">kg</span></span>
           </span>
           <span v-if="cardio" class="cardio-value">
-            <i class="fas fa-running"></i> {{ cardio }} min
+            <i class="fas fa-running"></i> <span>{{ cardio }}<span class="measure">min</span></span>
           </span>
         </div>
         <div v-else class="day-details-placeholder">
-          Click to add day details
+          + Day Info
         </div>
       </div>
       <button 
@@ -185,11 +185,19 @@ const formatDayDate = (day) => {
   return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const getColumnDate = (day) => {
-  const dayIndex = dayMap[day.toLowerCase()]
+const getColumnDate = (dayName) => {
+  const dayIndex = dayMap[dayName.toLowerCase()]
   const targetDate = new Date(props.selectedWeekStart)
   targetDate.setDate(targetDate.getDate() + dayIndex)
-  return targetDate.toISOString().split('T')[0]
+  
+  // Format the date in YYYY-MM-DD format in local time
+  const year = targetDate.getFullYear()
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0')
+  const day = String(targetDate.getDate()).padStart(2, '0')
+  const dateString = `${year}-${month}-${day}`
+  
+  console.log('TaskList: Column date for', dayName, ':', dateString)
+  return dateString
 }
 
 const handleDragChange = (evt) => {
@@ -225,8 +233,9 @@ const handleColumnClick = (event) => {
   if (event.target.closest('.task-card') || event.target.closest('.scroll-button')) {
     return
   }
-  console.log('TaskList: Column clicked, emitting date:', getColumnDate(props.title))
-  emit('column-click', getColumnDate(props.title))
+  const date = getColumnDate(props.title)
+  console.log('TaskList: Column clicked, emitting date:', date)
+  emit('column-click', date)
 }
 
 const hasDayDetails = computed(() => {
@@ -542,11 +551,10 @@ watch(() => props.tasks, (newTasks) => {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* .behind-today {
-  opacity: 0.7;
-  background-color: rgba(0, 0, 0, 0.2);
+.behind-today .measure {
+  display: none;
 }
-
+/*
 .behind-today .task-list-header {
   color: rgba(255, 255, 255, 0.5);
 }
@@ -569,7 +577,7 @@ watch(() => props.tasks, (newTasks) => {
 .task-list-footer {
   padding: 0.75rem;
   background-color: #2D303E;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
   text-align: center;
