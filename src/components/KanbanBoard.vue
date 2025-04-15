@@ -120,6 +120,7 @@ import WeightModal from './WeightModal.vue'
 import DayDetailsModal from './DayDetailsModal.vue'
 import { subscribeToTasks, addTask, updateTask, deleteTask, subscribeToWeights, saveWeight, subscribeToDayDetails, saveDayDetails } from '../services/firebaseService'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { useRouter } from 'vue-router'
 
 // Lazy load TaskModal
 const TaskModal = defineAsyncComponent(() => 
@@ -185,7 +186,7 @@ const totalWeeklyCalories = computed(() => {
 
 // Add computed property for view-specific total calories
 const viewTotalCalories = computed(() => {
-  // Create dates for the week range, normalized to midnight
+  // Create dates for the week range in local time
   const monday = new Date(selectedWeekStart.value)
   monday.setHours(0, 0, 0, 0)
   const sunday = new Date(monday)
@@ -199,21 +200,78 @@ const viewTotalCalories = computed(() => {
     let taskDate
     try {
       // Try to parse the mealDate, fallback to createdAt if mealDate is invalid
-      taskDate = task.mealDate ? new Date(task.mealDate) : new Date(task.createdAt)
+      if (task.mealDate) {
+        // If mealDate is in YYYY-MM-DD format, parse it directly
+        const [year, month, day] = task.mealDate.split('-')
+        taskDate = new Date(year, month - 1, day)
+      } else {
+        taskDate = new Date(task.createdAt)
+      }
       if (isNaN(taskDate.getTime())) {
         taskDate = new Date(task.createdAt)
       }
-      // Normalize task date to midnight for comparison
+      // Normalize task date to midnight in local time
       taskDate.setHours(0, 0, 0, 0)
     } catch (error) {
       taskDate = new Date(task.createdAt)
       taskDate.setHours(0, 0, 0, 0)
     }
     
-    return taskDate >= monday && taskDate <= sunday
+    const isInWeek = taskDate >= monday && taskDate <= sunday
+    
+    console.log('Task date check:', {
+      taskTitle: task.title,
+      taskDate: taskDate.toISOString(),
+      mealDate: task.mealDate,
+      monday: monday.toISOString(),
+      sunday: sunday.toISOString(),
+      isInWeek,
+      calories: task.calories
+    })
+    
+    return isInWeek
   })
   
-  return filteredTasks.reduce((total, task) => total + (parseInt(task.calories) || 0), 0).toLocaleString()
+  // Calculate total calories for the week
+  const totalCalories = filteredTasks.reduce((total, task) => {
+    const calories = parseInt(task.calories) || 0
+    console.log('Adding calories:', { taskTitle: task.title, calories, runningTotal: total + calories })
+    return total + calories
+  }, 0)
+  
+  // Calculate number of days to use for average
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  let daysToUse = 7 // Default to 7 days for completed weeks
+  
+  // Only calculate days passed if this is the current week
+  if (monday <= today && today <= sunday) {
+    // Calculate days passed in the current week
+    daysToUse = 1 // At least 1 day has passed (today)
+    if (today > monday) {
+      // If we're past Monday, calculate the difference
+      const diffTime = today - monday
+      daysToUse = Math.min(7, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1)
+    }
+  }
+  
+  // Calculate average calories per day
+  const averageCalories = daysToUse > 0 ? Math.round(totalCalories / daysToUse) : 0
+  
+  console.log('Weekly calories calculation:', {
+    totalCalories,
+    daysToUse,
+    averageCalories,
+    monday: monday.toISOString(),
+    sunday: sunday.toISOString(),
+    today: today.toISOString(),
+    isCurrentWeek: monday <= today && today <= sunday,
+    filteredTasksCount: filteredTasks.length,
+    allTasksCount: tasks.value.length
+  })
+  
+  return averageCalories.toLocaleString()
 })
 
 // Add ref for animation
@@ -246,6 +304,8 @@ const weightsUnsubscribe = ref(null)
 // Add new refs for day details
 const showDayDetailsModal = ref(false)
 const dayDetails = ref({})
+
+const router = useRouter()
 
 onMounted(() => {
   unsubscribe.value = subscribeToTasks((newTasks) => {
@@ -582,8 +642,7 @@ watch(showDayDetailsModal, (newValue) => {
 })
 
 const openAnalytics = () => {
-  // TODO: Implement analytics view
-  console.log('Opening analytics view')
+  router.push('/analytics')
 }
 </script>
 
@@ -606,6 +665,7 @@ const openAnalytics = () => {
 .kanban-header h1 {
   margin: 0;
   color: #ffffff;
+  font-size: 3.2em;
 }
 
 .kanban-header .header-content {

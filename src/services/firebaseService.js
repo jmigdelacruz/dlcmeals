@@ -8,7 +8,8 @@ import {
   query,
   orderBy,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  getDocs
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase'
@@ -17,6 +18,28 @@ import { db, storage } from '../firebase'
 const TASKS_COLLECTION = 'tasks'
 
 // Get all tasks
+export const getTasks = async () => {
+  try {
+    const q = query(collection(db, TASKS_COLLECTION), orderBy('createdAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    const tasks = []
+    querySnapshot.forEach((doc) => {
+      const data = doc.data()
+      // Ensure we have a valid date
+      const taskDate = data.date || data.createdAt || new Date().toISOString()
+      tasks.push({ 
+        id: doc.id, 
+        ...data,
+        date: taskDate
+      })
+    })
+    return tasks
+  } catch (error) {
+    console.error('Error fetching tasks:', error)
+    return []
+  }
+}
+
 export const subscribeToTasks = (callback) => {
   console.log('Setting up tasks subscription...')
   if (!db) {
@@ -126,24 +149,78 @@ export const deleteImage = async (filename) => {
   }
 }
 
-// Add weight-related functions
+// Weight-related functions
+export const getWeightData = async () => {
+  try {
+    const dayDetailsRef = collection(db, 'dayDetails')
+    const q = query(dayDetailsRef, orderBy('updatedAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    
+    const weightData = {}
+    querySnapshot.forEach((doc) => {
+      const data = doc.data()
+      console.log('Day details data:', data)
+      if (data.weight) {
+        weightData[doc.id] = data.weight
+      }
+    })
+    
+    console.log('Fetched weight data:', weightData)
+    return weightData
+  } catch (error) {
+    console.error('Error fetching weight data:', error)
+    return {}
+  }
+}
+
 export const subscribeToWeights = (callback) => {
   const weightsRef = collection(db, 'weights')
   return onSnapshot(weightsRef, (snapshot) => {
     const weights = {}
     snapshot.forEach((doc) => {
-      weights[doc.id] = doc.data().weight
+      const data = doc.data()
+      const date = data.date || doc.id
+      weights[date] = data.weight
     })
     callback(weights)
   })
 }
 
 export const saveWeight = async (date, weight) => {
-  const weightRef = doc(db, 'weights', date)
-  await setDoc(weightRef, { weight }, { merge: true })
+  try {
+    console.log('Saving weight:', { date, weight })
+    const weightRef = doc(db, 'weights', date)
+    await setDoc(weightRef, { 
+      weight,
+      date,
+      updatedAt: serverTimestamp()
+    }, { merge: true })
+    console.log('Weight saved successfully')
+  } catch (error) {
+    console.error('Error saving weight:', error)
+    throw error
+  }
 }
 
-// Add new functions for day details
+// Day details functions
+export const getDayDetails = async () => {
+  try {
+    const dayDetailsRef = collection(db, 'dayDetails')
+    const q = query(dayDetailsRef, orderBy('updatedAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    
+    const dayDetails = {}
+    querySnapshot.forEach((doc) => {
+      dayDetails[doc.id] = doc.data()
+    })
+    
+    return dayDetails
+  } catch (error) {
+    console.error('Error fetching day details:', error)
+    return {}
+  }
+}
+
 export const subscribeToDayDetails = (callback) => {
   const dayDetailsRef = collection(db, 'dayDetails')
   return onSnapshot(dayDetailsRef, (snapshot) => {
@@ -165,6 +242,49 @@ export const saveDayDetails = async (date, weight, cardio) => {
     }, { merge: true })
   } catch (error) {
     console.error('Error saving day details:', error)
+    throw error
+  }
+}
+
+// Cardio functions
+export const getCardioData = async () => {
+  try {
+    const dayDetailsRef = collection(db, 'dayDetails')
+    const q = query(dayDetailsRef, orderBy('updatedAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    
+    const cardioData = {}
+    querySnapshot.forEach((doc) => {
+      const data = doc.data()
+      console.log('Day details data:', data)
+      if (data.cardio) {
+        cardioData[doc.id] = {
+          activity: 'Cardio',
+          duration: data.cardio
+        }
+      }
+    })
+    
+    console.log('Fetched cardio data:', cardioData)
+    return cardioData
+  } catch (error) {
+    console.error('Error fetching cardio data:', error)
+    return {}
+  }
+}
+
+export const saveCardio = async (date, cardioData) => {
+  try {
+    console.log('Saving cardio:', { date, cardioData })
+    const cardioRef = doc(db, 'cardio', date)
+    await setDoc(cardioRef, {
+      ...cardioData,
+      date,
+      updatedAt: serverTimestamp()
+    }, { merge: true })
+    console.log('Cardio saved successfully')
+  } catch (error) {
+    console.error('Error saving cardio:', error)
     throw error
   }
 } 

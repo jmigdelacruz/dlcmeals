@@ -6,7 +6,8 @@ export const cspDirectives = {
     "'unsafe-eval'",   // Required for Vue's runtime
     "https://*.firebaseapp.com",
     "https://*.firebaseio.com",
-    "https://*.googleapis.com"
+    "https://*.googleapis.com",
+    "blob:"           // Required for web workers
   ],
   'style-src': [
     "'self'",
@@ -16,6 +17,7 @@ export const cspDirectives = {
   'img-src': [
     "'self'",
     "data:",
+    "blob:",          // Required for image blobs
     "https://*.firebaseapp.com",
     "https://*.firebaseio.com",
     "https://*.googleapis.com"
@@ -38,6 +40,7 @@ export const cspDirectives = {
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'frame-ancestors': ["'none'"],
+  'worker-src': ["'self'", "blob:"], // Allow blob URLs for workers
   'upgrade-insecure-requests': []
 }
 

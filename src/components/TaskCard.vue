@@ -357,12 +357,11 @@ const formatTitle = (title) => {
 
 .non-today {
   text-align: left;
-  padding: 16px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding-right: 16px;
   overflow: hidden;
   position: relative;
 }
@@ -487,6 +486,7 @@ const formatTitle = (title) => {
 
 .task-card.behind-today .task-title {
   text-align: center;
+  font-size: 70%;
 }
 
 .task-card.behind-today .description {

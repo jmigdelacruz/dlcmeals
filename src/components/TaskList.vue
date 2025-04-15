@@ -275,7 +275,7 @@ watch(() => props.tasks, (newTasks) => {
 .task-list {
   background: #1F1D2B;
   border-radius: 10px;
-  padding: 16px;
+  padding: 13px;
   min-height: 550px;
   width: 100%;
   display: flex;
@@ -297,7 +297,7 @@ watch(() => props.tasks, (newTasks) => {
   z-index: 1;
   min-height: 600px;
   margin: 0;
-  padding: 24px;
+  padding: 16px;
 }
 
 .task-list.today:hover {
@@ -323,7 +323,7 @@ watch(() => props.tasks, (newTasks) => {
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   color: #ffffff;
   font-weight: 500;
   min-width: 24px;
